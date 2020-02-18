@@ -38,7 +38,7 @@ pip install git+https://github.com/Dreamlone/SSGP-toolbox
 ### 3. Extra - папка с матрицей в формате .npy (бинарный формат), которая позволяет разделить ячейки матриц на группы. Название файла должно быть формата - "Extra.npy"
 
 Матрица может выглядеть следующим образом:
-![Biomes.png](attachment:https://github.com/Dreamlone/SSGP-toolbox/Supplementary/images/rm_2_Biomes.png)
+![Biomes.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_2_Biomes.png)
 
 В качестве значений в данной матрице должны быть записаны целые числа.
 
@@ -94,7 +94,7 @@ Gapfiller.filling_gaps(method = 'Lasso', predictor_configuration = 'Random',
 ### Принцип работы
 
 Алгоритм строит отдельно для каждого пикселя свою модель, затем в зависимости от заданных параметров применяет различные способы подбора предикторов. На иллюстрации приведен упрощенный пример того, как алгоритм формирует обучающую выборку.
-![Construction.png](attachment:https://github.com/Dreamlone/SSGP-toolbox/Supplementary/images/rm_3_Construction.png)
+![Construction.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_3_Construction.png)
 
 Программная реализация содержит 1 класс - SpatialGapfiller().
 #### Приватные методы:
@@ -106,11 +106,11 @@ Gapfiller.filling_gaps(method = 'Lasso', predictor_configuration = 'Random',
 
 По результатам проведенных экспериментов с моделью, установлено, что временная сложность алгоритма сублинейная.
 
-![Complexity.png](attachment:https://github.com/Dreamlone/SSGP-toolbox/Supplementary/images/rm_4_Complexity.png)
+![Complexity.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_4_Complexity.png)
 
 Для алгоритма была прозведена верефикация на тепловых данных дистанционного зондирования со спутниковой системы Sentinel-3. Были отобраны 6 разновременных снимков одной территории. Для каждого из 6 снимков генерировался пропуск определенного размера и формы. Всего было сгенерировано 8 типов пропусков. Результаты проведенных тестов можно увидеть ниже. В болшинстве случаев алгоритм ошибался менее чем на 1 градус, при том, что средний разброс значений температуры в пропуске составлял около 10.
 
-![Results.png](attachment:https://github.com/Dreamlone/SSGP-toolbox/Supplementary/images/rm_5_Results.png)
+![Results.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_5_Results.png)
 
 ## Параметры
 
