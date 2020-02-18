@@ -24,7 +24,7 @@ pip install git+https://github.com/Dreamlone/SSGP-toolbox
 Для корректной работы алгоритма необходимо подготовить обучающую выборку и данные для заполнения пропусков.
 Формируется директория (LST, NDVI или любое другое название, которое пользователь может задать самостоятельно), в которой расположены папки (названия папок фиксированы): 
 
-![Database.png](attachment:https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_1_Database.png)
+![Database.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_1_Database.png)
 
 ### 1. History - папка с матрицами в формате .npy (бинарный формат), которые являются обучающей выборкой.
 
