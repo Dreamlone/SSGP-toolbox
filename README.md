@@ -76,8 +76,8 @@ pip install git+https://github.com/Dreamlone/SSGP-toolbox
 ```python
 Gapfiller = SimpleSpatialGapfiller(directory = '/media/test/LST')
 Gapfiller.fill_gaps(method = 'SVR', predictor_configuration = 'Biome',
-                       hyperparameters = 'Custom', 
-                       params = {'kernel': 'linear', 'gamma': 'scale', 'C': 1000, 'epsilon': 1})
+                    hyperparameters = 'Custom', 
+                    params = {'kernel': 'linear', 'gamma': 'scale', 'C': 1000, 'epsilon': 1})
 ```
 
 Пример применения алгоритма. Выбранный метод - LASSO регрессия. Стратегия выбора предикторов - "случайные 100 точек". 
@@ -87,7 +87,8 @@ Gapfiller.fill_gaps(method = 'SVR', predictor_configuration = 'Biome',
 ```python
 Gapfiller = SimpleSpatialGapfiller(directory = '/media/test/LST')
 Gapfiller.fill_gaps(method = 'Lasso', predictor_configuration = 'Random',
-                       hyperparameters = 'GridSearch', add_outputs = True, key_values = {'gap': -1.0, 'skip': -10.0, 'NoData': -100.0})
+                    hyperparameters = 'GridSearch', add_outputs = True,
+                    key_values = {'gap': -1.0, 'skip': -10.0, 'NoData': -100.0})
 ```
 
 ## Параметры
