@@ -86,7 +86,7 @@ class SimpleSpatialGapfiller():
             matrix = np.load(key_path)
 
             # Если есть более 5% пикселей, которые не были сняты в этот момент времени, то матрица не включается в анализ
-            amount_na = (matrix == -32768.0).sum()
+            amount_na = (matrix == self.key_values.get('NoData')).sum()
             shape = matrix.shape
             threshold = amount_na/(shape[0]*shape[1])
             if threshold > self.main_threshold:
@@ -328,7 +328,7 @@ class SimpleSpatialGapfiller():
 
         def all_points(coord_row, coord_column, final_matrix):
             # Индексы всех точек, которые не закрыты облаками
-            coords = np.argwhere(final_matrix != -100)
+            coords = np.argwhere(final_matrix != self.key_values.get('gap'))
             coords = list(coords)
             coords.append([coord_row, coord_column])
             coords = np.array(coords)
