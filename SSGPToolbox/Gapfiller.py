@@ -53,7 +53,7 @@ from sklearn import preprocessing
 class SimpleSpatialGapfiller():
 
     # При инициализации класса необходмо указать
-    # directory - расположение проекта "LST"
+    # directory - расположение папок проекта: "History", "Inputs", и "Extra"
     def __init__(self, directory):
         # Пороговое значение для невключения слоев в обучающую выборку при превышении (изменяется от 0.0 до 1.0)
         self.main_threshold = 0.05
@@ -327,7 +327,7 @@ class SimpleSpatialGapfiller():
             return(predicted, validation_score)
 
         def all_points(coord_row, coord_column, final_matrix):
-            # Индексы всех точек, которые не закрыты облаками
+            # Индексы всех точек, которые не закрыты облаками (в том числе пиксели со значением skip, nodata)
             coords = np.argwhere(final_matrix != self.gap)
             coords = list(coords)
             coords.append([coord_row, coord_column])
@@ -353,7 +353,7 @@ class SimpleSpatialGapfiller():
             n_columns = shape[1]
 
             coords = []
-            # Если значение в случайной точке равно -100.0 или -200.0, то оно не добавляется
+            # Если значение в случайной точке равно gap, skip или nodata, то оно не добавляется
             number_iter = 0
             while number_iter <= 100:
                 random_i = random.randint(0, n_strings - 1)
@@ -432,7 +432,7 @@ class SimpleSpatialGapfiller():
                 n_columns = shape[1]
 
                 coords = []
-                # Если значение в случайной точке равно -100.0 или -200.0, то оно не добавляется
+                # Если значение в случайной точке равно gap, skip или nodata, то оно не добавляется
                 number_iter = 0
                 while number_iter <= 100:
                     random_i = random.randint(0, n_strings - 1)
@@ -513,12 +513,12 @@ class SimpleSpatialGapfiller():
                 dataframe = random_points(coord_row, coord_column, final_matrix = final_matrix)
 
             # Осуществляем подготовку данных для датасета
-            # Если в крайнем правом столбце есть хотя бы одно значение "-200.0", то данный пиксель не будет тронут алгоритмом
-            # Автоматически присваивается значение -200.0
+            # Если в крайнем правом столбце есть хотя бы одно значение skip, то данный пиксель не будет тронут алгоритмом
+            # Автоматически присваивается значение skip
             if any(value == self.skip for value in np.array(dataframe)[:,-1]):
                 predicted = self.skip
             else:
-                # Необходимо удалить те столбцы, в которых есть хотя бы одно значение "-200.0" (те значения, которые не нужно заполнять)
+                # Необходимо удалить те столбцы, в которых есть хотя бы одно значение skip (те значения, которые не нужно заполнять)
                 dataframe.replace(self.skip, np.nan, inplace=True)
                 dataframe.dropna(axis = 'columns', inplace = True)
 
@@ -595,7 +595,7 @@ class SimpleSpatialGapfiller():
                 scores.append(abs(score))
 
             # В матрицу записываем предсказанное алгоритмом значение
-            filled_matrix[coord_row,coord_column] = predicted
+            filled_matrix[coord_row, coord_column] = predicted
 
         npy_name = str(keys[-1]) + '.npy'
         filled_matrix_npy = os.path.join(self.Outputs_path, npy_name)
@@ -618,6 +618,7 @@ class SimpleSpatialGapfiller():
     # hyperparameters - выбор гиперпараметров (RandomGridSearch, GridSearch, Custom)
     # params - если выбран аргумент "Custom", то параметры модели передаются через аргумент params
     # add_outputs - будут ли добавляться заполненные алгоритмом слои в обучающую выборку
+    # key_values - словарь с обозначениями пропусков, нерелевантных и отсутствующих значений
     # В папке проекта "Outputs" создаются матрицы с заполненными пропусками в формате .npy
     # Формируется JSON файл с оценкой качества работы алгоритма на каждой матрице
     def fill_gaps(self, method = 'Lasso', predictor_configuration = 'Random', hyperparameters = 'RandomGridSearch',
