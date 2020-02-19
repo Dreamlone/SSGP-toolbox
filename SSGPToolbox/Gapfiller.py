@@ -85,8 +85,8 @@ class SimpleSpatialGapfiller():
             key = file[:-4] # Ключ для матрицы
             matrix = np.load(key_path)
 
-            # Если есть более 5% пикселей, которые не были сняты в этот момент времени, то матрица не включается в анализ
-            amount_na = (matrix == self.key_values.get('NoData')).sum()
+            # Если есть более main_threshold доли пикселей, которые не были сняты в этот момент времени, то матрица не включается в анализ
+            amount_na = (matrix == self.nodata).sum()
             shape = matrix.shape
             threshold = amount_na/(shape[0]*shape[1])
             if threshold > self.main_threshold:
@@ -163,7 +163,7 @@ class SimpleSpatialGapfiller():
                 param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split,
                               'max_leaf_nodes': max_leaf_nodes}
                 # Задаем модель, которую будем обучать
-                estimator = RandomForestRegressor(n_estimators = 200, n_jobs=8)
+                estimator = RandomForestRegressor(n_estimators = 200, n_jobs = 8)
                 # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
                 optimizer = GridSearchCV(estimator, param_grid, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
@@ -176,7 +176,7 @@ class SimpleSpatialGapfiller():
                 estimator.set_params(**params)
 
                 # Проверка по кросс-валидации
-                fold = KFold(n_splits=3, shuffle=True)
+                fold = KFold(n_splits = 3, shuffle=True)
                 validation_score = cross_val_score(estimator = estimator, X = X_train, y = y_train, cv = fold, scoring = 'neg_mean_absolute_error')
 
                 # Обучаем модель уже на всех данных
@@ -328,7 +328,7 @@ class SimpleSpatialGapfiller():
 
         def all_points(coord_row, coord_column, final_matrix):
             # Индексы всех точек, которые не закрыты облаками
-            coords = np.argwhere(final_matrix != self.key_values.get('gap'))
+            coords = np.argwhere(final_matrix != self.gap)
             coords = list(coords)
             coords.append([coord_row, coord_column])
             coords = np.array(coords)
@@ -359,11 +359,11 @@ class SimpleSpatialGapfiller():
                 random_i = random.randint(0, n_strings - 1)
                 random_j = random.randint(0, n_columns - 1)
                 coordinates = [random_i, random_j]
-                if final_matrix[random_i, random_j] == -100.0:
+                if final_matrix[random_i, random_j] == self.gap:
                     pass
-                elif final_matrix[random_i, random_j] == -200.0:
+                elif final_matrix[random_i, random_j] == self.skip:
                     pass
-                elif final_matrix[random_i, random_j] == -32768.0:
+                elif final_matrix[random_i, random_j] == self.nodata:
                     pass
                 # Если у нас уже есть такая пара в списке, то мы не добавляем его в список
                 elif any(tuple(coordinates) == tuple(element) for element in coords):
@@ -395,7 +395,7 @@ class SimpleSpatialGapfiller():
 
             # Важный момент - мы присваиваем всем значениям пикселей в копии матрицы биомов, если они закрыты облаком, значение -100.0
             new_extra_matrix = np.copy(extra_matrix)
-            new_extra_matrix[final_matrix == -100.0] = -100.0
+            new_extra_matrix[final_matrix == self.gap] = self.gap
 
             # Индексы точек, которые попадают в данный биом и при этом в данный момент не являются пропусками
             coords = np.argwhere(new_extra_matrix == extra_code)
@@ -438,11 +438,11 @@ class SimpleSpatialGapfiller():
                     random_i = random.randint(0, n_strings - 1)
                     random_j = random.randint(0, n_columns - 1)
                     coordinates = [random_i, random_j]
-                    if final_matrix[random_i, random_j] == -100.0:
+                    if final_matrix[random_i, random_j] == self.gap:
                         pass
-                    elif final_matrix[random_i, random_j] == -200.0:
+                    elif final_matrix[random_i, random_j] == self.skip:
                         pass
-                    elif final_matrix[random_i, random_j] == -32768.0:
+                    elif final_matrix[random_i, random_j] == self.nodata:
                         pass
                     # Если у нас уже есть такая пара в списке, то мы не добавляем его в список
                     elif any(tuple(coordinates) == tuple(element) for element in coords):
@@ -490,7 +490,7 @@ class SimpleSpatialGapfiller():
 
         final_matrix = dictionary.get(keys[-1]) # Та матрица, которую необходимо заполнить
         # Отмечаем индексы точек, которые необходимо заполнить
-        gaps = np.argwhere(final_matrix == -100.0)
+        gaps = np.argwhere(final_matrix == self.gap)
         print('Number of gap pixels -', len(gaps))
 
         # Делаем копию матрицы - в неё мы будем записывать значения после применения алгоритма
@@ -515,11 +515,11 @@ class SimpleSpatialGapfiller():
             # Осуществляем подготовку данных для датасета
             # Если в крайнем правом столбце есть хотя бы одно значение "-200.0", то данный пиксель не будет тронут алгоритмом
             # Автоматически присваивается значение -200.0
-            if any(value == -200.0 for value in np.array(dataframe)[:,-1]):
-                predicted = -200.0
+            if any(value == self.skip for value in np.array(dataframe)[:,-1]):
+                predicted = self.skip
             else:
                 # Необходимо удалить те столбцы, в которых есть хотя бы одно значение "-200.0" (те значения, которые не нужно заполнять)
-                dataframe.replace(-200.0, np.nan, inplace=True)
+                dataframe.replace(self.skip, np.nan, inplace=True)
                 dataframe.dropna(axis = 'columns', inplace = True)
 
                 # Зададим новые названия столбцов
@@ -530,8 +530,8 @@ class SimpleSpatialGapfiller():
                 dataframe.set_axis(col_names, axis = 1, inplace = True)
 
                 # Присваиваем оставшимся флагам значение Nan
-                dataframe.replace(-32768.0, np.nan, inplace = True)
-                dataframe.replace(-100.0, np.nan, inplace = True)
+                dataframe.replace(self.nodata, np.nan, inplace = True)
+                dataframe.replace(self.gap, np.nan, inplace = True)
 
                 dataframe = dataframe.dropna(how = 'all')  # Удаляем те строки, где по всем признакам имеем пропуски (облако закрыло всю территорию)
 
@@ -584,7 +584,7 @@ class SimpleSpatialGapfiller():
                 elif method == 'ExtraTrees':
                     predicted, score = Extra_trees_regression(X_train, y_train, X_test, params = params)
                 elif method == 'Knn':
-                    predicted, score = Knn_regression(X_train, y_train, X_test, params = params)
+                    predicted, score = KNN_regression(X_train, y_train, X_test, params = params)
                 elif method == 'SVM':
                     predicted, score = SVM_regression(X_train, y_train, X_test, params = params)
                 # Подразумевается, что при незаданом методе, по умолчанию используется Лассо
@@ -622,8 +622,10 @@ class SimpleSpatialGapfiller():
     # Формируется JSON файл с оценкой качества работы алгоритма на каждой матрице
     def fill_gaps(self, method = 'Lasso', predictor_configuration = 'Random', hyperparameters = 'RandomGridSearch',
                      params = None, add_outputs = False, key_values = {'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}):
-        # Словарь будет доступен объекту класса
-        self.key_values = key_values
+        # Определяем флаги для пропусков, значений, которые заполнять не нужно ошибок проецирования
+        self.gap = key_values.get('gap')
+        self.skip = key_values.get('skip')
+        self.nodata = key_values.get('NoData')
 
          # Получаем матрицу для разбиения пикселей на группы
         Extra_file = os.path.join(self.Extra_path, 'Extra.npy')
@@ -643,10 +645,10 @@ class SimpleSpatialGapfiller():
             # Если мы имеем менее 101 незакрытых пикселей на сцене, то рассчет не производится
             shape = matrix.shape
             all_pixels = shape[0] * shape[1] # Все пиксели в матрице
-            if all_pixels - ((matrix == self.key_values.get('gap')).sum() + (matrix == self.key_values.get('skip')).sum() + (matrix == self.key_values.get('NoData')).sum()) <= 101:
+            if all_pixels - ((matrix == self.gap).sum() + (matrix == self.skip).sum() + (matrix == self.nodata).sum()) <= 101:
                 print('No calculation for matrix ', key)
             # Если на снимке нет пропусков, то он сохранается как заполненный без применения алгоритма
-            elif (matrix == self.key_values.get('gap')).sum() == 0:
+            elif (matrix == self.gap).sum() == 0:
                 print('No gaps in matrix ', key)
                 npy_name = str(key) + '.npy'
                 filled_matrix_npy = os.path.join(self.Outputs_path, npy_name)
