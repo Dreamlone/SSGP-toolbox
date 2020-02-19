@@ -14,18 +14,18 @@ requires = [
 ]
 
 setuptools.setup(
-    name="SSGP-toolbox",
-    version="1.0",
-    author="Michail Sarafanov",
-    author_email="",
-    description="Simple Spatial Gapfilling Processor. Toolbox for filling gaps in spatial datasets (e.g. remote sensing data)",
-    long_description=long_description,
-    keywords='machine learning, spatial data, gapfilling',
-    long_description_content_type="text/markdown",
-    url="https://github.com/Dreamlone/SSGP-toolbox",
-    install_requires=requires,
-    packages=setuptools.find_packages(),
-    classifiers=[
+    name = "SSGP-toolbox",
+    version = "1.0",
+    author = "Mikhail Sarafanov",
+    author_email = "mik_sar@mail.ru",
+    description = "Simple Spatial Gapfilling Processor. Toolbox for filling gaps in spatial datasets (e.g. remote sensing data)",
+    long_description = long_description,
+    keywords = 'machine learning, spatial data, gapfilling',
+    long_description_content_type = "text/markdown",
+    url = "https://github.com/Dreamlone/SSGP-toolbox",
+    install_requires = requires,
+    packages = setuptools.find_packages(),
+    classifiers = [
         "Programming Language :: Python :: 3",
         "License :: GNU General Public License v3.0",
         "Operating System :: OS Independent",
