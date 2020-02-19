@@ -102,7 +102,7 @@ class SimpleSpatialGapfiller():
     # Приватный метод - подготавливает датасет, обучает модель, записывает результат (в виде файла .npy) в указанную папку
     # dictionary - словарь, ключ - время съемки, значение - матрица; все слои, кроме последнего - нужны для обучения
     # keys - список ключей, где последний ключ относится к матрице, в которой необходимо заполнить пропуски
-    # method - название алгоритма (Lasso, RandomForest, ExtraTrees, Knn, SVM)
+    # method - название алгоритма (Lasso, RandomForest, ExtraTrees, Knn, SVR)
     # predictor_configuration - подбор предикторов (All, Random, Biome)
     # hyperparameters - выбор гиперпараметров (RandomGridSearch, GridSearch, Custom)
     # params - если выбран аргумент "Custom", то параметры модели передаются через аргумент params
@@ -585,7 +585,7 @@ class SimpleSpatialGapfiller():
                     predicted, score = Extra_trees_regression(X_train, y_train, X_test, params = params)
                 elif method == 'Knn':
                     predicted, score = KNN_regression(X_train, y_train, X_test, params = params)
-                elif method == 'SVM':
+                elif method == 'SVR':
                     predicted, score = SVM_regression(X_train, y_train, X_test, params = params)
                 # Подразумевается, что при незаданом методе, по умолчанию используется Лассо
                 else:
@@ -613,7 +613,7 @@ class SimpleSpatialGapfiller():
         self.metadata.update({npy_name: mean_score})
 
     # Обертка над представленными выше методами, запускает алгоритм
-    # method - название алгоритма (Lasso, RandomForest, ExtraTrees, Knn, SVM)
+    # method - название алгоритма (Lasso, RandomForest, ExtraTrees, Knn, SVR)
     # predictor_configuration - подбор предикторов (All, Random, Biome)
     # hyperparameters - выбор гиперпараметров (RandomGridSearch, GridSearch, Custom)
     # params - если выбран аргумент "Custom", то параметры модели передаются через аргумент params

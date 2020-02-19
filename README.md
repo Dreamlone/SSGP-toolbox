@@ -75,7 +75,7 @@ pip install git+https://github.com/Dreamlone/SSGP-toolbox
 
 ```python
 Gapfiller = SimpleSpatialGapfiller(directory = '/media/test/LST')
-Gapfiller.fill_gaps(method = 'SVM', predictor_configuration = 'Biome',
+Gapfiller.fill_gaps(method = 'SVR', predictor_configuration = 'Biome',
                        hyperparameters = 'Custom', 
                        params = {'kernel': 'linear', 'gamma': 'scale', 'C': 1000, 'epsilon': 1})
 ```
@@ -97,7 +97,7 @@ Gapfiller.fill_gaps(method = 'Lasso', predictor_configuration = 'Random',
 - 'RandomForest' - случайный лес
 - 'ExtraTrees' - сверхслуйчаный лес
 - 'Knn' - k-ближайших соседей
-- 'SVM' - метод опорных векторов
+- 'SVR' - метод опорных векторов
 
 ### Стратегии подбора предикторов - predictor_configuration
 - ПО УМОЛЧАНИЮ 'Random' - Случано выбранные 100 точек на снимке
