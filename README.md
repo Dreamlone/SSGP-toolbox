@@ -152,7 +152,8 @@ Gapfiller.fill_gaps(method = 'Lasso', predictor_configuration = 'Random',
 
 ![Results.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_5_Results.png)
 
-
+Из графика видно, что точность восстановления данных зависит больше от распределения поля температуры на снимке,
+чем от размера пропуска.
 
 
 
