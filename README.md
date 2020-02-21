@@ -4,7 +4,7 @@ SimpleSpatialGapfiller - класс, позволяющий заполнять �
 
 
 ## Requirements
-    'gdal==2.4',
+    'gdal>=2.4',
     'numpy',
     'scikit-learn==0.21.3',
     'pandas',
