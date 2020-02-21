@@ -78,7 +78,6 @@ class S3_L2_LST():
         x_centroid = (minX + maxX) / 2
         zone = int(((x_centroid + 180) / 6.0) % 60) + 1
         utm_code = base_code + zone
-        utm_code = base_code + zone
 
         wgs = Proj(init="epsg:4326")
         utm = Proj(init="epsg:" + str(utm_code))
