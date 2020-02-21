@@ -16,7 +16,7 @@ class MODIS_MOD_MYD_11():
     # qa_policy  --- mode qa flags sensitivity. 0 - Do not use non-confident data 1 - Use everything
 
     def __init__(self, file_path, extent, resolution, key_values={'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0},
-                 layer='LST_Day_1km', qa_policy=0):
+                 layer='Day', qa_policy=0):
         self.file_path = file_path
         self.extent = extent
         self.resolution = resolution
