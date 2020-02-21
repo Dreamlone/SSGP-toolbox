@@ -147,6 +147,8 @@ class MODIS_NDVI_MOD09GA():
         ndvi.SetGeoTransform(nir.GetGeoTransform())
         ndvi.SetProjection(nir.GetProjection())
         ndvi_array = (nir_array - red_array) / (nir_array + red_array)
+        ndvi_array[ndvi_array > 1] = self.key_values['gap']
+        ndvi_array[ndvi_array < -1] = self.key_values['gap']
         ndvi_array[quality == 1] = self.key_values['gap']
         ndvi_array[quality == 2] = self.key_values['skip']
         ndvi_array[quality == 3] = self.key_values['NoData']
@@ -193,9 +195,9 @@ class MODIS_NDVI_MOD09GA():
         matrix = np.array(matrix)
         np.save(npy_path, matrix)
 
-#a = MODIS_NDVI_MOD09GA('/home/ekazakov/MOD09GA.A2019010.h20v03.006.2019012030812.hdf',
-#                       extent={'minX': 47, 'minY': 56,'maxX': 48, 'maxY': 57},
-#                       resolution={'xRes': 1000, 'yRes': 1000},
-#                       qa_policy=0)
-#
-#a.archive_to_geotiff('/home/ekazakov/modis5')
+a = MODIS_NDVI_MOD09GA('/home/ekazakov/MOD09GA.A2019197.h20v03.006.2019199030333.hdf',
+                       extent={'minX': 47, 'minY': 56,'maxX': 48, 'maxY': 57},
+                       resolution={'xRes': 1000, 'yRes': 1000},
+                       qa_policy=0)
+
+a.archive_to_geotiff('/home/ekazakov/modis5')
