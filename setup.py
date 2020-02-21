@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 requires = [
-    'gdal==2.4',
+    'gdal>=2.4',
     'numpy',
     'scikit-learn==0.21.3',
     'pandas',
