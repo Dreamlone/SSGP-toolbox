@@ -4,7 +4,7 @@ from pyproj import Proj, transform
 from datetime import datetime
 import numpy as np
 
-class MODIS_MOD_MYD_11():
+class MODIS_NDVI_MOD09GA():
 
     bits_map = np.array(['00', '01', '10', '11'])
 
@@ -15,8 +15,7 @@ class MODIS_MOD_MYD_11():
     # layer      --- Day, Night
     # qa_policy  --- mode qa flags sensitivity. 0 - Do not use non-confident data 1 - Use everything
 
-    def __init__(self, file_path, extent, resolution, key_values={'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0},
-                 layer='LST_Day_1km', qa_policy=0):
+    def __init__(self, file_path, extent, resolution, key_values={'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}, qa_policy=0):
         self.file_path = file_path
         self.extent = extent
         self.resolution = resolution
@@ -24,18 +23,9 @@ class MODIS_MOD_MYD_11():
 
         self.file_name = os.path.basename(self.file_path)
         self.utm_code, self.utm_extent = self.__get_utm_code_from_extent()
-        self.ds_type = self.detect_ds_type(self.file_name)
-        self.layer = layer
         self.qa_policy = qa_policy
 
-        self.datetime = ''
-        if self.ds_type == 'L2':
-            self.datetime = datetime.strptime(self.file_name.split('.')[1] + self.file_name.split('.')[2], 'A%Y%j%H%M')
-        if self.ds_type == 'A1':
-            self.datetime = datetime.strptime(self.file_name.split('.')[1], 'A%Y%j')
-        if self.ds_type == 'A2':
-            self.datetime = datetime.strptime(self.file_name.split('.')[1], 'A%Y%j')
-
+        self.datetime = datetime.strptime(self.file_name.split('.')[1], 'A%Y%j')
         self.datetime = self.datetime.strftime('%Y%m%dT%H%M%S')
 
         self.metadata = {}
@@ -45,8 +35,6 @@ class MODIS_MOD_MYD_11():
                               'utm_code': self.utm_code,
                               'utm_extent': self.utm_extent,
                               'resolution': self.resolution,
-                              'ds_type': self.ds_type,
-                              'layer': self.layer,
                               'qa_policy': self.qa_policy})
 
     # Choosing optimal UTM projection
@@ -76,27 +64,15 @@ class MODIS_MOD_MYD_11():
         utm_extent = {'minX': min_corner[0], 'minY': min_corner[1], 'maxX': max_corner[0], 'maxY': max_corner[1]}
         return (utm_code, utm_extent)
 
-    def detect_ds_type(self, file_name):
-        if file_name[0:8] in ['MOD11_L2', 'MYD11_L2']:
-            return 'L2'
-        if file_name[0:7] in ['MOD11A1', 'MYD11A1']:
-            return 'A1'
-        if file_name[0:7] in ['MOD11A2', 'MYD11A2']:
-            return 'A2'
-        return 0
-
     def save_metadata(self, output_path):
         with open(output_path, 'w') as f:
             f.write(json.dumps(self.metadata))
 
-    def file_path_to_product_name(self, file_path, mod_type, product):
-        if mod_type == 'L2':
-            new_path = 'HDF4_EOS:EOS_SWATH:\"%s\":MOD_Swath_LST:%s' % (file_path, product)
-        elif mod_type == 'A1':
-            new_path = 'HDF4_EOS:EOS_GRID:\"%s\":MODIS_Grid_Daily_1km_LST:%s' % (file_path, product)
-        elif mod_type == 'A2':
-            new_path = 'HDF4_EOS:EOS_GRID:\"%s\":MODIS_Grid_8Day_1km_LST:%s' % (file_path, product)
-        #new_path = os.path.join(dirname,new_basename)
+    def file_path_to_product_name(self, file_path, product):
+        if product in ['sur_refl_b01_1','sur_refl_b02_1']:
+            new_path = 'HDF4_EOS:EOS_GRID:\"%s\":MODIS_Grid_500m_2D:%s' % (file_path, product)
+        elif product in ['state_1km_1']:
+            new_path = 'HDF4_EOS:EOS_GRID:\"%s\":MODIS_Grid_1km_2D:%s' % (file_path, product)
         return new_path
 
     def last_two_bits(self, arr_in):
@@ -109,79 +85,75 @@ class MODIS_MOD_MYD_11():
         # 3 - NoData
         quality = np.zeros_like(qc_array)
 
-
         if self.qa_policy == 0:
             last_two_bits_array = self.last_two_bits(qc_array)
             quality[last_two_bits_array == '00'] = 0
             quality[last_two_bits_array == '01'] = 1
             quality[last_two_bits_array == '10'] = 1
-            quality[last_two_bits_array == '11'] = 2
+            quality[last_two_bits_array == '11'] = 0
             quality[qc_array == -32768] = 3
 
         if self.qa_policy == 1:
             last_two_bits_array = self.last_two_bits(qc_array)
             quality[last_two_bits_array == '00'] = 0
-            quality[last_two_bits_array == '01'] = 0
-            quality[last_two_bits_array == '10'] = 1
-            quality[last_two_bits_array == '11'] = 2
+            quality[last_two_bits_array == '01'] = 1
+            quality[last_two_bits_array == '10'] = 0
+            quality[last_two_bits_array == '11'] = 0
             quality[qc_array == -32768] = 3
 
         return quality
 
     def __preparation(self, mode='gtiff'):
-        if self.ds_type == 'L2':
-            projection = 'EPSG:4326'
+        projection = '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'
 
-            # Get QC
-            qc_full_file_path = self.file_path_to_product_name(self.file_path, self.ds_type, 'QC')
-            qc = gdal.Warp('',qc_full_file_path, format='MEM', tps=True, dstSRS=projection, dstNodata=-32768, outputType=gdal.GDT_Int16)
-            qc_array = qc.GetRasterBand(1).ReadAsArray()
-            quality = self.create_quality_array(qc_array)
-            qc.GetRasterBand(1).WriteArray(quality)
+        # Get QC
+        qc_full_file_path = self.file_path_to_product_name(self.file_path, 'state_1km_1')
+        qc = gdal.Warp('', qc_full_file_path, format='MEM', srcNodata=-1, dstNodata=-32768, outputType=gdal.GDT_Int16)
+        qc_array = qc.GetRasterBand(1).ReadAsArray()
+        quality = self.create_quality_array(qc_array)
+        qc.GetRasterBand(1).WriteArray(quality)
 
-            # Get LST
-            lst_full_file_path = self.file_path_to_product_name(self.file_path, self.ds_type, 'LST')
-            lst = gdal.Warp('', lst_full_file_path, format='MEM', tps=True, dstSRS=projection, dstNodata=-32768, outputType=gdal.GDT_Float32)
-            lst_array = lst.GetRasterBand(1).ReadAsArray()
-            lst_array = lst_array / 50.0
-            lst_array[quality == 1] = self.key_values['gap']
-            lst_array[quality == 2] = self.key_values['skip']
-            lst_array[quality == 3] = self.key_values['NoData']
-            lst.GetRasterBand(1).WriteArray(lst_array)
+        # QC extent
+        qc_geotransform = qc.GetGeoTransform()
+        xMin = qc_geotransform[0]
+        yMax = qc_geotransform[3]
+        xMax = xMin + qc_geotransform[1] * qc.RasterXSize
+        yMin = yMax + qc_geotransform[5] * qc.RasterYSize
+        xRes = qc_geotransform[1]
+        yRes = qc_geotransform[5]
 
+        # Get RED band
+        red_full_file_path = self.file_path_to_product_name(self.file_path, 'sur_refl_b01_1')
+        red = gdal.Warp('', red_full_file_path, format='MEM', dstSRS=projection, dstNodata=-32768,
+                        outputType=gdal.GDT_Float32, xRes=xRes,yRes=yRes,
+                        outputBounds = [xMin,yMin,xMax,yMax], copyMetadata=False)
 
-        elif self.ds_type in ['A1','A2']:
-            projection = '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'
-            if self.layer == 'Day':
-                qc_name = 'QC_Day'
-                lst_name = 'LST_Day_1km'
-            else:
-                qc_name = 'QC_Night'
-                lst_name = 'LST_Night_1km'
+        red_array = red.GetRasterBand(1).ReadAsArray()
+        red_array = red_array / 10000.0
+        red.GetRasterBand(1).WriteArray(red_array)
 
-            # Get QC
-            qc_full_file_path = self.file_path_to_product_name(self.file_path, self.ds_type, qc_name)
-            qc = gdal.Warp('', qc_full_file_path, format='MEM', srcNodata=-1, dstNodata=-32768, outputType=gdal.GDT_Int16)
-            qc_array = qc.GetRasterBand(1).ReadAsArray()
-            quality = self.create_quality_array(qc_array)
-            qc.GetRasterBand(1).WriteArray(quality)
+        # Get NIR band
+        nir_full_file_path = self.file_path_to_product_name(self.file_path, 'sur_refl_b02_1')
+        nir = gdal.Warp('', nir_full_file_path, format='MEM', dstSRS=projection, dstNodata=-32768,
+                        outputType=gdal.GDT_Float32, xRes=xRes,yRes=yRes,
+                        outputBounds = [xMin,yMin,xMax,yMax], copyMetadata=False)
 
-            # Get LST
-            lst_full_file_path = self.file_path_to_product_name(self.file_path, self.ds_type, lst_name)
-            lst = gdal.Warp('', lst_full_file_path, format='MEM', dstSRS=projection, dstNodata=-32768, outputType=gdal.GDT_Float32)
-            lst_array = lst.GetRasterBand(1).ReadAsArray()
-            lst_array = lst_array / 50.0
-            lst_array[quality == 1] = self.key_values['gap']
-            lst_array[quality == 2] = self.key_values['skip']
-            lst_array[quality == 3] = self.key_values['NoData']
-            lst.GetRasterBand(1).WriteArray(lst_array)
+        nir_array = nir.GetRasterBand(1).ReadAsArray()
+        nir_array = nir_array / 10000.0
+        nir.GetRasterBand(1).WriteArray(nir_array)
 
-        else:
-            return 0
+        drv = gdal.GetDriverByName('MEM')
+        ndvi = drv.Create('', nir.RasterXSize, nir.RasterYSize, 1, gdal.GDT_Float32)
+        ndvi.SetGeoTransform(nir.GetGeoTransform())
+        ndvi.SetProjection(nir.GetProjection())
+        ndvi_array = (nir_array - red_array) / (nir_array + red_array)
+        ndvi_array[quality == 1] = self.key_values['gap']
+        ndvi_array[quality == 2] = self.key_values['skip']
+        ndvi_array[quality == 3] = self.key_values['NoData']
+        ndvi.GetRasterBand(1).WriteArray(ndvi_array)
 
         output_rs = osr.SpatialReference()
         output_rs.ImportFromEPSG(self.utm_code)
-
 
         if mode == 'gtiff':
             warpOptions = gdal.WarpOptions(dstNodata=self.key_values['NoData'], format='GTiff',
@@ -197,7 +169,7 @@ class MODIS_MOD_MYD_11():
                                                          self.utm_extent.get('maxX'), self.utm_extent.get('maxY')],
                                                          xRes=self.resolution.get('xRes'), yRes=self.resolution.get('yRes'))
 
-        return lst, warpOptions
+        return ndvi, warpOptions
 
     def archive_to_geotiff(self, save_path):
         if os.path.isdir(save_path) == False:
@@ -221,20 +193,9 @@ class MODIS_MOD_MYD_11():
         matrix = np.array(matrix)
         np.save(npy_path, matrix)
 
-#a = MODIS_MOD_MYD_11('/media/ekazakov/Data/SHI/MODIS_MOD_MYD_11/samples/MOD11_L2.A2020048.1915.006.2020050045344.hdf',
-#                     extent={'minX': 35, 'minY': 60,'maxX': 36, 'maxY': 61},
-#                     resolution={'xRes': 1000, 'yRes': 1000},
-#                     qa_policy=0)
-
-#a = MODIS_MOD_MYD_11('/media/ekazakov/Data/SHI/MODIS_MOD_MYD_11/samples/MYD11A1.A2020048.h20v03.006.2020050061734.hdf',
-#                     extent={'minX': 49, 'minY': 53,'maxX': 50, 'maxY': 54},
-#                     resolution={'xRes': 1000, 'yRes': 1000},
-#                     layer='Day',
-#                     qa_policy=0)
+#a = MODIS_NDVI_MOD09GA('/home/ekazakov/MOD09GA.A2019010.h20v03.006.2019012030812.hdf',
+#                       extent={'minX': 47, 'minY': 56,'maxX': 48, 'maxY': 57},
+#                       resolution={'xRes': 1000, 'yRes': 1000},
+#                       qa_policy=0)
 #
-#a = MODIS_MOD_MYD_11('/media/ekazakov/Data/SHI/MODIS_MOD_MYD_11/samples/MYD11A2.A2020033.h20v03.006.2020042210144.hdf',
-#                     extent={'minX': 49, 'minY': 53,'maxX': 50, 'maxY': 54},
-#                     resolution={'xRes': 1000, 'yRes': 1000},
-#                     layer='Day',
-#                     qa_policy=1)
-#a.archive_to_npy('/home/ekazakov/modis4')
+#a.archive_to_geotiff('/home/ekazakov/modis5')
