@@ -68,14 +68,16 @@ class S3_L2_LST():
         maxX = self.extent.get('maxX')
         maxY = self.extent.get('maxY')
 
-        x_centroid = (minX + maxX)/2
+        y_centroid = (minY + maxY) / 2
         # 326NN или 327NN- где NN это номер зоны
-        if x_centroid < 0:
+        if y_centroid < 0:
             base_code = 32700
         else:
             base_code = 32600
 
+        x_centroid = (minX + maxX) / 2
         zone = int(((x_centroid + 180) / 6.0) % 60) + 1
+        utm_code = base_code + zone
         utm_code = base_code + zone
 
         wgs = Proj(init="epsg:4326")
