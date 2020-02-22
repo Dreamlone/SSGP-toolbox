@@ -629,7 +629,7 @@ class SimpleSpatialGapfiller():
         self.nodata = key_values.get('NoData')
 
         if predictor_configuration == 'Biome':
-            # Получаем матрицу для разбиения пикселей на группы (если указан параметр 'Biome')
+            # Получаем матрицу для разбиения пикселей на группы
             Extra_file = os.path.join(self.Extra_path, 'Extra.npy')
             extra_matrix = np.load(Extra_file)
         else:
