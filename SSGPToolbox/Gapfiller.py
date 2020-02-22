@@ -628,9 +628,12 @@ class SimpleSpatialGapfiller():
         self.skip = key_values.get('skip')
         self.nodata = key_values.get('NoData')
 
-         # Получаем матрицу для разбиения пикселей на группы
-        Extra_file = os.path.join(self.Extra_path, 'Extra.npy')
-        extra_matrix = np.load(Extra_file)
+        if predictor_configuration == 'Biome':
+            # Получаем матрицу для разбиения пикселей на группы
+            Extra_file = os.path.join(self.Extra_path, 'Extra.npy')
+            extra_matrix = np.load(Extra_file)
+        else:
+            extra_matrix = None
 
         # Файлы, в которых необходимо заполнить пропуски
         inputs_files = os.listdir(self.Inputs_path)
