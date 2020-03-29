@@ -1,9 +1,10 @@
 # SSGP-toolbox
 
-SimpleSpatialGapfiller - класс, позволяющий заполнять пропуски в матрицах на основе методов машинного обучения
+SimpleSpatialGapfiller - python class for filling gaps in matrices based on machine learing techniques. Main purpose is to provide convenient and simple instruments for modeling geophysical parameters, derived with Earth Remote Sensing, under clouds. But it also could be used for any matrices.
 
 
 ## Requirements
+    'python>=3.7',
     'gdal>=2.4',
     'numpy',
     'scikit-learn==0.21.3',
@@ -17,6 +18,33 @@ SimpleSpatialGapfiller - класс, позволяющий заполнять �
 ```python
 pip install git+https://github.com/Dreamlone/SSGP-toolbox
 ```
+
+## Modules
+
+For now SSGT-toolbox is presented with:
+ - Gapfiller class
+ - Several preparators: for Sentinel 3 LST data; for MODIS LST products; for MODIS NDVI based on reflectance product.
+ 
+ By the way, you can prepare any data by yourself, it must be in binary numpy matrices format (.npy) and organized in several directories, as shown in docs.
+
+## Documentation and examples
+
+All documentation and examples for now are described in Jupyter Notebooks:
+ - [Theoretical basis](https://nbviewer.jupyter.org/github/Dreamlone/SSGP-toolbox/blob/master/Notebooks/Theoretical_basis.ipynb)
+ - [Gapfiller class, how to organize data and how to use](https://nbviewer.jupyter.org/github/Dreamlone/SSGP-toolbox/blob/master/Notebooks/Gapfilling.ipynb)
+ - [Sentinel 3 LST preparation](https://nbviewer.jupyter.org/github/Dreamlone/SSGP-toolbox/blob/master/Notebooks/Prepare_S3LST.ipynb)
+ - [MODIS LST preparation](https://nbviewer.jupyter.org/github/Dreamlone/SSGP-toolbox/blob/master/Notebooks/Prepare_MODIS_LST.ipynb)
+
+## Contacts
+
+Feel free to contact us:
+
+Mikhail Sarafanov (maintainer) | mik_sar@mail.ru
+
+Eduard Kazakov | ee.kazakov@gmail.com
+
+======================
+## TODO: move all this stuff to notebooks, add new
 
 ## Data preparation
 
