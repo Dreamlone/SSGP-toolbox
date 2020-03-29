@@ -87,7 +87,7 @@ class MODIS_MOD_MYD_11():
 
     def save_metadata(self, output_path):
         with open(output_path, 'w') as f:
-            f.write(json.dumps(self.metadata))
+            f.write(json.dumps(self.metadata))        
 
     def file_path_to_product_name(self, file_path, mod_type, product):
         if mod_type == 'L2':
