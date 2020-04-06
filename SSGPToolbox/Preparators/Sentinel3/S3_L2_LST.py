@@ -22,6 +22,7 @@ import shutil
 
 import numpy as np
 import gdal, osr
+import json
 from netCDF4 import Dataset
 from pyproj import Proj, transform
 
@@ -250,3 +251,9 @@ class S3_L2_LST():
         raster = None
         # Удаляем временную директорию
         shutil.rmtree(self.temporary_path, ignore_errors = True)
+
+    # Метод для сохранения метаданных в файл JSON
+    # output_path --- место, в которое нужно поместить файл с результатом
+    def save_metadata(self, output_path):
+        with open(output_path, 'w') as f:
+            f.write(json.dumps(self.metadata))
