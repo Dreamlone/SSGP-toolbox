@@ -304,10 +304,6 @@ class Discretizator():
             str_tensor_timesteps.append(time.strftime('%Y%m%dT%H%M%S'))
         str_tensor_timesteps = np.array(str_tensor_timesteps)
 
-        print('Путь до файла -', netCDF_name)
-        print('Размерность тензора -', tensor.shape)
-        print('Всего слоев в матрице -', len(str_tensor_timesteps))
-
         # Формирует netCDF файл
         root_grp = Dataset(netCDF_name, 'w', format='NETCDF4')
         root_grp.description = 'Discretized matrices'
