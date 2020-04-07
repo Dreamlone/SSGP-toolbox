@@ -271,10 +271,8 @@ class Discretizator():
         return(tensor, tensor_timesteps)
 
     # Метод, позволяющий сохранять полученные результаты в виде матриц npy
-    def save_npy(self, tensor, tensor_timesteps):
-        new_path = os.path.split(self.directory)[0]
-        save_path = os.path.join(new_path, 'Discretisation_output')
-
+    # save_path --- папка, в которую требуется сохранить результат
+    def save_npy(self, tensor, tensor_timesteps, save_path):
         # Создаем папку 'Discretisation_output'; если есть, то используем существующую
         if os.path.isdir(save_path) == False:
             os.makedirs(save_path)
@@ -290,9 +288,8 @@ class Discretizator():
             np.save(npy_name, matrix)
 
     # Метод, позволяющий сохранять полученные результаты в виде netCDF файла
-    def save_netcdf(self, tensor, tensor_timesteps):
-        new_path = os.path.split(self.directory)[0]
-        save_path = os.path.join(new_path, 'Discretisation_output')
+    # save_path --- папка, в которую требуется сохранить результат
+    def save_netcdf(self, tensor, tensor_timesteps, save_path):
 
         # Создаем папку 'Discretisation_output'; если есть, то используем существующую
         if os.path.isdir(save_path) == False:
@@ -306,6 +303,10 @@ class Discretizator():
             # Переводим формат datetime в строку
             str_tensor_timesteps.append(time.strftime('%Y%m%dT%H%M%S'))
         str_tensor_timesteps = np.array(str_tensor_timesteps)
+
+        print('Путь до файла -', netCDF_name)
+        print('Размерность тензора -', tensor.shape)
+        print('Всего слоев в матрице -', len(str_tensor_timesteps))
 
         # Формирует netCDF файл
         root_grp = Dataset(netCDF_name, 'w', format='NETCDF4')
