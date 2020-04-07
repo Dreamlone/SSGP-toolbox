@@ -270,6 +270,7 @@ class Discretizator():
 
         return(tensor, tensor_timesteps)
 
+
     # Метод, позволяющий сохранять полученные результаты в виде матриц npy
     # save_path --- папка, в которую требуется сохранить результат
     def save_npy(self, tensor, tensor_timesteps, save_path):
@@ -286,6 +287,7 @@ class Discretizator():
 
             npy_name = os.path.join(save_path, time)
             np.save(npy_name, matrix)
+
 
     # Метод, позволяющий сохранять полученные результаты в виде netCDF файла
     # save_path --- папка, в которую требуется сохранить результат
