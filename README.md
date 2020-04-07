@@ -13,6 +13,8 @@ SimpleSpatialGapfiller - python class for filling gaps in matrices based on mach
     'netCDF4',
     'pyproj' 
 
+###### If errors occur when installing "gdal", you should install the gdal library before running the command to install this module
+
 ## Install module
 
 ```python
