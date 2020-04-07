@@ -44,7 +44,6 @@ Mikhail Sarafanov (maintainer) | mik_sar@mail.ru
 
 Eduard Kazakov | ee.kazakov@gmail.com
 
-======================
 
 
 
