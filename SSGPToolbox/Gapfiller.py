@@ -1,32 +1,13 @@
 '''
 
-class SimpleSpatialGapfiller --- класс, позволяющий заполнять пропуски в матрицах на основе методов машинного обучения
+class SimpleSpatialGapfiller --- a class that allows you to fill in gaps in matrices based on machine learning method
 
-Описание данных на вход:
-Директория (LST, NDVI или другое), в которой расположены папки
-1) History - папка с матрицами в формате .npy (бинарный формат), которые являются обучающей выборкой
-        Названия файлов должны быть формата - "20190625T185030.npy", где 2019.. - год, ..06.. - месяц, ..25.. - день, ..T185030 - время - часы минуты секунды
-        format = '%Y%m%dT%H%M%S'
+Private methods:
+- __make_training_sample --- creating a training sample from matrices in the "History" folder
+- __learning_and_fill --- filling in gaps for the matrix, writing the result to the "Outputs" folder
 
-2) Inputs - папка с матрицами в формате .npy (бинарный формат), которые имеют пропуски, которые необходимо заполнить
-        Названия файлов должны быть формата - "20190625T185030.npy", где 2019.. - год, ..06.. - месяц, ..25.. - день, ..T185030 - время - часы минуты секунды
-        format = '%Y%m%dT%H%M%S'
-
-3) Extra - папка с матрицей в формате .npy (бинарный формат), которая позволяет разделить ячейки матриц на группы
-        Названия файла должно быть формата - "Extra.npy"
-
-Флаги в матрицах:
-1) gap    - значение в пикселях, которые необходимо заполнить
-2) skip   - пиксели, которые не нужно заполнять
-3) NoData - значение в пикселях, которые не попали в экстенд снимка
-
-
-Приватные методы:
-__make_training_sample  --- формирование обучающей выборки из матриц в папке "History"
-__learning_and_fill     --- заполнение пропусков на конкретной матрице, запись результата в папку "Outputs"
-
-Публичные методы:
-fill_gaps               --- применение метода __learning для каждой из матриц в папке "Inputs", создание файла с метаданными о качестве работы алгоритма
+Public methods:
+- fill_gaps --- using the __learning_and_fill method for each of the matrices in the "Inputs" folder, creating a file with metadata about the quality of the algorithm
 
 '''
 
