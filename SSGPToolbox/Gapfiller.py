@@ -3,11 +3,11 @@
 class SimpleSpatialGapfiller --- a class that allows you to fill in gaps in matrices based on machine learning method
 
 Private methods:
-- __make_training_sample --- creating a training sample from matrices in the "History" folder
-- __learning_and_fill --- filling in gaps for the matrix, writing the result to the "Outputs" folder
+__make_training_sample --- creating a training sample from matrices in the "History" folder
+__learning_and_fill    --- filling in gaps for the matrix, writing the result to the "Outputs" folder
 
 Public methods:
-- fill_gaps --- using the __learning_and_fill method for each of the matrices in the "Inputs" folder, creating a file with metadata about the quality of the algorithm
+fill_gaps --- using the __learning_and_fill method for each of the matrices in the "Inputs" folder, creating a file with metadata about the quality of the algorithm
 
 '''
 

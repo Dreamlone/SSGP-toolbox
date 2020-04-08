@@ -3,13 +3,13 @@
 Discretizator --- a class intended for creating time series and filling in gaps in it
 
 Private methods:
-- __sampling --- this method allows you to bring data to the specified time step
-- __gap_process --- method for filling in missing values in a time series
+__sampling    --- this method allows you to bring data to the specified time step
+__gap_process --- method for filling in missing values in a time series
 
 Public methods:
-- make_time_series --- a method for placing matrices on a regular time grid and filling in gaps in time series
-- save_npy --- a method for storing the results obtained as .npy matrices
-- save_netcdf --- method for saving the results as a netCDF file
+make_time_series --- a method for placing matrices on a regular time grid and filling in gaps in time series
+save_npy         --- a method for storing the results obtained as .npy matrices
+save_netcdf      --- method for saving the results as a netCDF file
 
 '''
 
