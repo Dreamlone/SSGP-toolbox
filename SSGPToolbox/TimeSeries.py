@@ -17,7 +17,7 @@ import os
 import datetime
 import numpy as np
 import pandas as pd
-from netCDF4 import Dataset
+from netCDF4 import Dataset     
 
 class Discretizator():
 
