@@ -1,18 +1,18 @@
 '''
 
-class S3_LST_transformer - Класс, предназначенный для перевода файлов из архивов с данными LST в нужный формат
+class S3_LST_transformer - A class for converting files from archives with LST data to the geotiff or npy format
 Mission: Sentinel-3
 Satellite Platform: S3A_*, S3B_*
 Product Type: SL_2_LST___
 Timeliness: "Near Real Time", "Short Time Critical", "Short Time Critical"
 
-Приватные методы:
-get_utm_code_from_extent  --- метод, позволяющий подбирать подходящую метрическую проекцию для нужной территории
-preparation               --- метод, выполняющий извлечение матриц из архива, их привязку и осуществляющий подготовку опций для обрезки растра
+Private methods:
+get_utm_code_from_extent  --- method for selecting the appropriate metric projection for the territory
+preparation               --- method that extracts matrices from the archive, binds them, and prepares options for cropping the raster
 
-Публичные методы:
-archive_to_geotiff        --- метод, выполняющий обрезку матриц по выбранным опциям, сохраняет файл .geotiff в нужной директории
-archive_to_npy            --- метод, выполняющий обрезку матриц по выбранным опциям, сохраняет файл .npy в нужной директории
+Public methods:
+archive_to_geotiff        --- saves the matrix in the geotiff format
+archive_to_npy            --- saves the matrix in the npy format
 
 '''
 
