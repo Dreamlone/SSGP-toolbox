@@ -134,8 +134,12 @@ class S3_L2_LST():
         # Помечаем все пиксели занятые морской водой в нашей матрице значениями - "skip"
         LST_matrix[biome == 0] = self.key_values.get('skip')
 
-        # дружно обратим последовательность строк во всех массивах
-        div = np.ma.array(LST_matrix)
+        # Если необходимо достать матрицу биомов
+        if self.biomes_instead_lst == True:
+            div = np.ma.array(biome)
+        # Иначе обрабатывается матрица LST
+        else:
+            div = np.ma.array(LST_matrix)
         div = np.flip(div, axis = 0)
         lats = np.flip(lat, axis = 0)
         lons = np.flip(long, axis = 0)
@@ -218,7 +222,10 @@ class S3_L2_LST():
 
     # Метод для формирования файла .geotiff в нужной директории
     # save_path --- место, в которое нужно поместить файл с результатом
-    def archive_to_geotiff(self, save_path):
+    # biomes_instead_lst --- требуется ли получить матрицу типов ландшафтов вместо матрицы LST
+    def archive_to_geotiff(self, save_path, biomes_instead_lst = False):
+        self.biomes_instead_lst = biomes_instead_lst
+
         if os.path.isdir(save_path) == False:
             os.mkdir(save_path)
         warpOptions, imageVRTPath = self.__preparation()
@@ -232,7 +239,10 @@ class S3_L2_LST():
 
     # Метод для формирования файла .npy в нужной директории
     # save_path --- место, в которое нужно поместить файл с результатом
-    def archive_to_npy(self, save_path):
+    # biomes_instead_lst --- требуется ли получить матрицу типов ландшафтов вместо матрицы LST
+    def archive_to_npy(self, save_path, biomes_instead_lst = False):
+        self.biomes_instead_lst = biomes_instead_lst
+
         if os.path.isdir(save_path) == False:
             os.mkdir(save_path)
         warpOptions, imageVRTPath = self.__preparation()
