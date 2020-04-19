@@ -230,7 +230,10 @@ class S3_L2_LST():
             os.mkdir(save_path)
         warpOptions, imageVRTPath = self.__preparation()
 
-        geotiff_name = self.datetime + '.tif'
+        if self.biomes_instead_lst == True:
+            geotiff_name = self.datetime + '_biomes.tif'
+        else:
+            geotiff_name = self.datetime + '.tif'
         geotiff_path = os.path.join(save_path, geotiff_name)
         raster = gdal.Warp(geotiff_path, imageVRTPath, dstNodata = self.key_values.get('NoData'), options = warpOptions)
 
@@ -252,7 +255,10 @@ class S3_L2_LST():
         raster = gdal.Warp(geotiff_path, imageVRTPath, dstNodata = self.key_values.get('NoData'), options = warpOptions)
 
         # Сохраняем матрицу в формате .npy
-        npy_name = self.datetime + '.npy'
+        if self.biomes_instead_lst == True:
+            npy_name = self.datetime + '_biomes.npy'
+        else:
+            npy_name = self.datetime + '.npy'
         npy_path = os.path.join(save_path, npy_name)
         matrix = raster.ReadAsArray()
         matrix = np.array(matrix)
