@@ -169,9 +169,9 @@ def cellular_expand (matrix, biome_matrix, gap = -100.0, iter = 10):
                     else:
                         fact_number = fact_number + value
 
-                    # Если сгенерированное число больше fact_number, то пиксель станет облачным
-                    if prob_number >= fact_number:
-                        next_matrix[i, j] = gap
+                        # Если сгенерированное число больше fact_number, то пиксель станет облачным
+                        if prob_number >= fact_number:
+                            next_matrix[i, j] = gap
 
         # Возвращаем матрицу, которая будет получена на следующем шаге
         return (next_matrix)
