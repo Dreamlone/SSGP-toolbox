@@ -23,7 +23,7 @@ pip install git+https://github.com/Dreamlone/SSGP-toolbox
 
 ## Modules
 
-For now SSGT-toolbox is presented with:
+For now SSGP-toolbox is presented with:
  - Gapfiller class
  - Discretizator class
  - Several preparators: for Sentinel 3 LST data; for MODIS LST products; for MODIS NDVI based on reflectance product.
