@@ -618,6 +618,7 @@ class SimpleSpatialGapfiller():
 
         # Файлы, в которых необходимо заполнить пропуски
         inputs_files = os.listdir(self.Inputs_path)
+        inputs_files.sort()
         for input in inputs_files:
             start = timeit.default_timer()  # Засекаем время
             # Применим метод для сведения матриц в ассоциативный массив, и так как словарь неупорядочен, то запишем ключи в строгом порядке в список keys
