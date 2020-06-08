@@ -4,10 +4,13 @@ from pyproj import Proj, transform
 from datetime import datetime
 import numpy as np
 
-class MODIS_NDVI_MOD09GA():
+# Class for retrieving NDVI and Shortwave Albedo from MOD09GA
+# and preparing it for SSGP
+
+class MODIS_Reflectance_Products_MOD09GA():
 
     bits_map = np.array(['00', '01', '10', '11'])
-
+    supported_products = ['ndvi','albedo']
     # file_path  --- full path to target HDF file
     # extent     --- dictionary like {'minX': ..., 'minY': ...,'maxX': ..., 'maxY': ...}, coordinated are WGS84
     # resolution --- dictionary like {'xRes': 1000, 'yRes': 1000}, with spatial resolution of target array in meters
@@ -15,11 +18,14 @@ class MODIS_NDVI_MOD09GA():
     # layer      --- Day, Night
     # qa_policy  --- mode qa flags sensitivity. 0 - Do not use non-confident data 1 - Use everything
 
-    def __init__(self, file_path, extent, resolution, key_values={'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}, qa_policy=0):
+    def __init__(self, file_path, product, extent, resolution, key_values={'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}, qa_policy=0):
         self.file_path = file_path
         self.extent = extent
         self.resolution = resolution
         self.key_values = key_values
+        self.product = product
+        if self.product not in self.supported_products:
+            raise ValueError ('product must be from list: %s' % str(self.supported_products))
 
         self.file_name = os.path.basename(self.file_path)
         self.utm_code, self.utm_extent = self.__get_utm_code_from_extent()
@@ -69,7 +75,7 @@ class MODIS_NDVI_MOD09GA():
             f.write(json.dumps(self.metadata))
 
     def file_path_to_product_name(self, file_path, product):
-        if product in ['sur_refl_b01_1','sur_refl_b02_1']:
+        if product in ['sur_refl_b01_1','sur_refl_b02_1','sur_refl_b03_1','sur_refl_b04_1','sur_refl_b05_1','sur_refl_b06_1','sur_refl_b07_1']:
             new_path = 'HDF4_EOS:EOS_GRID:\"%s\":MODIS_Grid_500m_2D:%s' % (file_path, product)
         elif product in ['state_1km_1']:
             new_path = 'HDF4_EOS:EOS_GRID:\"%s\":MODIS_Grid_1km_2D:%s' % (file_path, product)
@@ -103,7 +109,18 @@ class MODIS_NDVI_MOD09GA():
 
         return quality
 
-    def __preparation(self, mode='gtiff'):
+    def __get_prepared_band(self, band_number, projection, xRes, yRes, xMin, yMin, xMax, yMax):
+        band_full_file_path = self.file_path_to_product_name(self.file_path, 'sur_refl_b0%s_1' % band_number)
+        band = gdal.Warp('', band_full_file_path, format='MEM', dstSRS=projection, dstNodata=-32768,
+                        outputType=gdal.GDT_Float32, xRes=xRes, yRes=yRes,
+                        outputBounds=[xMin, yMin, xMax, yMax], copyMetadata=False)
+
+        band_array = band.GetRasterBand(1).ReadAsArray()
+        band_array = band_array / 10000.0
+        band.GetRasterBand(1).WriteArray(band_array)
+        return band
+
+    def __preparation(self, product, mode='gtiff'):
         projection = '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'
 
         # Get QC
@@ -122,37 +139,49 @@ class MODIS_NDVI_MOD09GA():
         xRes = qc_geotransform[1]
         yRes = qc_geotransform[5]
 
-        # Get RED band
-        red_full_file_path = self.file_path_to_product_name(self.file_path, 'sur_refl_b01_1')
-        red = gdal.Warp('', red_full_file_path, format='MEM', dstSRS=projection, dstNodata=-32768,
-                        outputType=gdal.GDT_Float32, xRes=xRes,yRes=yRes,
-                        outputBounds = [xMin,yMin,xMax,yMax], copyMetadata=False)
+        if self.product == 'ndvi':
+            # Get RED band
+            red = self.__get_prepared_band(1, projection, xRes, yRes, xMin, yMin, xMax, yMax)
+            red_array = red.GetRasterBand(1).ReadAsArray()
 
-        red_array = red.GetRasterBand(1).ReadAsArray()
-        red_array = red_array / 10000.0
-        red.GetRasterBand(1).WriteArray(red_array)
+            # Get NIR band
+            nir = self.__get_prepared_band(2, projection, xRes, yRes, xMin, yMin, xMax, yMax)
+            nir_array = nir.GetRasterBand(1).ReadAsArray()
 
-        # Get NIR band
-        nir_full_file_path = self.file_path_to_product_name(self.file_path, 'sur_refl_b02_1')
-        nir = gdal.Warp('', nir_full_file_path, format='MEM', dstSRS=projection, dstNodata=-32768,
-                        outputType=gdal.GDT_Float32, xRes=xRes,yRes=yRes,
-                        outputBounds = [xMin,yMin,xMax,yMax], copyMetadata=False)
+            output_array = (nir_array - red_array) / (nir_array + red_array)
+            output_array[output_array > 1] = self.key_values['gap']
+            output_array[output_array < -1] = self.key_values['gap']
 
-        nir_array = nir.GetRasterBand(1).ReadAsArray()
-        nir_array = nir_array / 10000.0
-        nir.GetRasterBand(1).WriteArray(nir_array)
+        if self.product == 'albedo':
+            b1 = self.__get_prepared_band(1, projection, xRes, yRes, xMin, yMin, xMax, yMax)
+            b2 = self.__get_prepared_band(2, projection, xRes, yRes, xMin, yMin, xMax, yMax)
+            b3 = self.__get_prepared_band(3, projection, xRes, yRes, xMin, yMin, xMax, yMax)
+            b4 = self.__get_prepared_band(4, projection, xRes, yRes, xMin, yMin, xMax, yMax)
+            b5 = self.__get_prepared_band(5, projection, xRes, yRes, xMin, yMin, xMax, yMax)
+            b7 = self.__get_prepared_band(7, projection, xRes, yRes, xMin, yMin, xMax, yMax)
+
+            b1_array = b1.GetRasterBand(1).ReadAsArray()
+            b2_array = b2.GetRasterBand(1).ReadAsArray()
+            b3_array = b3.GetRasterBand(1).ReadAsArray()
+            b4_array = b4.GetRasterBand(1).ReadAsArray()
+            b5_array = b5.GetRasterBand(1).ReadAsArray()
+            b7_array = b7.GetRasterBand(1).ReadAsArray()
+
+            # Liang, S. (2000). Narrowband to broadband conversions of land surface albedo: I. Algorithms. Remote Sensing of Environment, 76(1), 213-238
+            output_array = 0.160*b1_array + 0.291*b2_array + 0.243*b3_array + 0.116*b4_array + 0.112*b5_array + 0.081*b7_array - 0.0015
+            output_array[output_array > 1] = self.key_values['gap']
+            output_array[output_array < 0] = self.key_values['gap']
+
 
         drv = gdal.GetDriverByName('MEM')
-        ndvi = drv.Create('', nir.RasterXSize, nir.RasterYSize, 1, gdal.GDT_Float32)
-        ndvi.SetGeoTransform(nir.GetGeoTransform())
-        ndvi.SetProjection(nir.GetProjection())
-        ndvi_array = (nir_array - red_array) / (nir_array + red_array)
-        ndvi_array[ndvi_array > 1] = self.key_values['gap']
-        ndvi_array[ndvi_array < -1] = self.key_values['gap']
-        ndvi_array[quality == 1] = self.key_values['gap']
-        ndvi_array[quality == 2] = self.key_values['skip']
-        ndvi_array[quality == 3] = self.key_values['NoData']
-        ndvi.GetRasterBand(1).WriteArray(ndvi_array)
+        output = drv.Create('', qc.RasterXSize, qc.RasterYSize, 1, gdal.GDT_Float32)
+        output.SetGeoTransform(qc.GetGeoTransform())
+        output.SetProjection(qc.GetProjection())
+
+        output_array[quality == 1] = self.key_values['gap']
+        output_array[quality == 2] = self.key_values['skip']
+        output_array[quality == 3] = self.key_values['NoData']
+        output.GetRasterBand(1).WriteArray(output_array)
 
         output_rs = osr.SpatialReference()
         output_rs.ImportFromEPSG(self.utm_code)
@@ -171,13 +200,13 @@ class MODIS_NDVI_MOD09GA():
                                                          self.utm_extent.get('maxX'), self.utm_extent.get('maxY')],
                                                          xRes=self.resolution.get('xRes'), yRes=self.resolution.get('yRes'))
 
-        return ndvi, warpOptions
+        return output, warpOptions
 
     def archive_to_geotiff(self, save_path):
         if os.path.isdir(save_path) == False:
             os.makedirs(save_path)
 
-        lst, warpOptions = self.__preparation(mode='gtiff')
+        lst, warpOptions = self.__preparation(product=self.product, mode='gtiff')
         geotiff_name = self.datetime + '.tif'
         geotiff_path = os.path.join(save_path, geotiff_name)
         gdal.Warp(geotiff_path, lst, dstNodata=self.key_values.get('NoData'), options=warpOptions)
@@ -186,7 +215,7 @@ class MODIS_NDVI_MOD09GA():
         if os.path.isdir(save_path) == False:
             os.makedirs(save_path)
 
-        lst, warpOptions = self.__preparation(mode='npy')
+        lst, warpOptions = self.__preparation(product=self.product, mode='npy')
         raster = gdal.Warp('', lst, dstNodata=self.key_values.get('NoData'), options=warpOptions)
 
         npy_name = self.datetime + '.npy'
@@ -195,10 +224,16 @@ class MODIS_NDVI_MOD09GA():
         matrix = np.array(matrix)
         np.save(npy_path, matrix)
 
+#a = MODIS_Reflectance_Products_MOD09GA('/home/ekazakov/MOD09GA.A2019197.h20v03.006.2019199030333.hdf',
+#                                       product='albedo',
+#                                       extent={'minX': 47, 'minY': 56,'maxX': 48, 'maxY': 57},
+#                                       resolution={'xRes': 1000, 'yRes': 1000},
+#                                       qa_policy=0)
+#a.archive_to_geotiff('/home/ekazakov/modis2')
+
 #a = MODIS_NDVI_MOD09GA('/home/ekazakov/MOD09GA.A2019197.h20v03.006.2019199030333.hdf',
 #                       extent={'minX': 47, 'minY': 56,'maxX': 48, 'maxY': 57},
 #                       resolution={'xRes': 1000, 'yRes': 1000},
 #                       qa_policy=0)
 #
 #a.archive_to_geotiff('/home/ekazakov/modis5')
-#
