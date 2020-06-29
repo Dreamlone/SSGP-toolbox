@@ -114,7 +114,7 @@ class S3_L2_LST():
                 LST_ancillary_ds = archive.extract(LST_ancillary_ds_nc, path = self.temporary_path)
 
         flags_in = Dataset(flags_in)
-        clouds = np.array(flags_in.variables['cloud_in'])                                         # Матрица с облаками
+        clouds = np.array(flags_in.variables['bayes_in'])                                         # Матрица с облаками
 
         geodetic_in = Dataset(geodetic_in)
         el = np.array(geodetic_in.variables['elevation_in'])                                      # Матрица высот
@@ -130,7 +130,7 @@ class S3_L2_LST():
         # ВНИМАНИЕ! Важен порядок присвоения флагов, сначала облакам - потом, все остальное
         # Иначе мы будем заполнять пиксель от облаков, в котором значение -inf потому что это море
         # Помечаем все пиксели с облаками на нашей матрице значениями - "gap"
-        LST_matrix[clouds > 0] = self.key_values.get('gap')
+        LST_matrix[clouds == 2] = self.key_values.get('gap')
         # Помечаем все пиксели занятые морской водой в нашей матрице значениями - "skip"
         LST_matrix[biome == 0] = self.key_values.get('skip')
 
