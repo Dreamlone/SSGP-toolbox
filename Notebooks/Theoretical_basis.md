@@ -49,11 +49,11 @@ Thus, the cloud moving over the territory can close pixels for several minutes o
 
 If the study is to fill in gaps in order to get images that characterize the average temperature distribution in the absence of clouds, rather than at the specific time, then it is appropriate to use an approach to exclude pixels shaded by clouds. A cellular automaton is used to detect such shaded pixels. The algorithm is auxiliary.
 
-<p align="center">
+<div align="center">
     
 ![Cellular_schema.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_9_cellular.png)
 
-</p>
+</div>
 
 
 A probabilistic approach is used to determine shaded pixels. The probability of assigning a pixel to a shaded one is proportional to the number of neighboring (Moore's neighborhood) pixels covered by the cloud. The probability of assigning a pixel to a shaded one is greater for those pixels whose temperature is lower than the median temperature value for pixels from the same biome.
