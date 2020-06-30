@@ -37,6 +37,7 @@ All documentation and examples for now are described in Markdown files and Jupyt
  - [Theoretical basis](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Theoretical_basis.md)
  - [Sentinel 3 LST preparation](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Prepare_S3LST.ipynb)
  - [MODIS LST preparation](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Prepare_MODIS_LST.ipynb)
+ - [Identifying cloud-shaded pixels](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Cellular_automaton.ipynb)
  - ##### [Gapfiller class, how to organize data and how to use](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Gapfilling.ipynb)
  - ##### [Discretizator class, how to organize data and how to use](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Discretizator.ipynb)
 
