@@ -33,8 +33,8 @@ For now SSGP-toolbox is presented with:
 
 ## Documentation and examples
 
-All documentation and examples for now are described in Jupyter Notebooks:
- - [Theoretical basis](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Theoretical_basis.ipynb)
+All documentation and examples for now are described in Markdown files and Jupyter Notebooks:
+ - [Theoretical basis](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Theoretical_basis.md)
  - [Sentinel 3 LST preparation](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Prepare_S3LST.ipynb)
  - [MODIS LST preparation](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Prepare_MODIS_LST.ipynb)
  - ##### [Gapfiller class, how to organize data and how to use](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Notebooks/Gapfilling.ipynb)
