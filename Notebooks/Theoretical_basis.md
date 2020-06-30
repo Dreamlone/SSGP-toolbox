@@ -40,6 +40,7 @@ This approach of filling in gaps is most effective in the case of smooth time se
 ![TimeSeries1.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_8_TS.png)
 
 ## Identification of distorted values
+[function - cellular_expand](https://github.com/Dreamlone/SSGP-toolbox/blob/master/SSGPToolbox/common_functions.py)
 
 ###### The algorithm was developed to identify anomalies in temperature fields (therefore, using it in fields with other parameters may lead to incorrect results)
 
