@@ -102,20 +102,14 @@ def cellular_expand (matrix, biome_matrix, gap = -100.0, iter = 10):
                     # Выбираем число, такое, что если prob_number превысит его, то пиксель станет облачным на следующем шаге
                     if len(id_cloud) >= 8:
                         # Чем ближе значение fact_number к 0, тем больше вероятность того, что пиксель станет "облаком"
-                        fact_number = 0.5
+                        fact_number = 0.8
                     elif len(id_cloud) == 7:
-                        fact_number = 0.7
+                        fact_number = 0.85
                     elif len(id_cloud) == 6:
                         fact_number = 0.9
                     elif len(id_cloud) == 5:
                         fact_number = 0.95
-                    elif len(id_cloud) == 4:
-                        fact_number = 0.96
-                    elif len(id_cloud) == 3:
-                        fact_number = 0.97
-                    elif len(id_cloud) == 2:
-                        fact_number = 0.98
-                    elif len(id_cloud) == 1:
+                    else:
                         fact_number = 0.99
 
                     # К изначально определенному значению вероятности добавляем некоторую величину
@@ -126,7 +120,7 @@ def cellular_expand (matrix, biome_matrix, gap = -100.0, iter = 10):
                     # Индексы точек, которые попадают в данный биом и при этом в данный момент не являются пропусками
                     coords = np.argwhere(biome_matrix == biome_code)
                     # Если точек в биоме недостаточно, то берем все известные точки
-                    if len(coords) < 16:
+                    if len(coords) < 41:
                         coords = np.argwhere(matrix != gap)
                     else:
                         pass
@@ -136,9 +130,9 @@ def cellular_expand (matrix, biome_matrix, gap = -100.0, iter = 10):
                     # Вектор из рассчитаных расстояний от целевого пикселя до всех остальных
                     distances = scipy.spatial.distance.cdist(target_pixel, coords)[0]
 
-                    # Выбираем ближайшие 15 пикселей
+                    # Выбираем ближайшие 40 пикселей
                     new_coords = []
-                    for iter in range(0, 15):
+                    for iter in range(0, 40):
                         # Какой индекс в массиве coords имеет элемент с наименьшим расстоянием от целевого пикселя
                         index_min_dist = np.argmin(distances)
 
@@ -164,6 +158,9 @@ def cellular_expand (matrix, biome_matrix, gap = -100.0, iter = 10):
                     value = ((matrix[i, j] - median_local_tmp) / amplitide)
                     # Если температура выше, чем медианная по биому, то ничего не делаем
                     if value >= 0:
+                        pass
+                    # Если количество соседних облачных пикселей строго меньше 3, то тоже не рассматриваем данный пиксель
+                    elif len(id_cloud) < 3:
                         pass
                     # Чем меньше температура, тем выше вероятность того, что данный пиксель станет "облаком" на следующем шаге
                     else:
