@@ -60,4 +60,8 @@ A probabilistic approach is used to determine shaded pixels. The probability of 
 
 ![Cellular_app.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_10_cellular.png)
 
+If the procedure for filling in gaps for the image is performed based on the original cloud configuration and the "extended" one, we will get the following results:
+
 ![Cellular_reason.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_11_cellular.png)
+
+As can be seen from the graph, using shaded pixels significantly changes the result of applying the gap filling algorithm. The presented algorithm allows to exclude abnormal values in the image.
