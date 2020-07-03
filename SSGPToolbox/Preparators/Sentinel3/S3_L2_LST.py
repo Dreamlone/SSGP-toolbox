@@ -116,7 +116,7 @@ class S3_L2_LST():
         flags_in = Dataset(flags_in)
         confidence_in = np.array(flags_in.variables['confidence_in'])  # Матрица с флагами
 
-        # Нам необходимо найти такие значения в матрице confidence_in, в которую значение параметра могло бы входить
+        # Нам необходимо найти такие значения в матрице confidence_in, в которую значение флага могло бы входить
         # в качестве слагаемого
         bits_map = ['0'] * 16384
         bits_map.append('A')
