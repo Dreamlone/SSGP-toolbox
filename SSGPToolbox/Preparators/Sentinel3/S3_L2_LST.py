@@ -144,9 +144,9 @@ class S3_L2_LST():
         # Иначе мы будем заполнять пиксель от облаков, в котором значение -inf потому что это море
         # Помечаем все пиксели с облаками на нашей матрице значениями - "gap"
         LST_matrix[clouds_сonf_in == 'A'] = self.key_values.get('gap')
-        LST_matrix[clouds_bayes_in == 'A'] = self.key_values.get('skip')
+        LST_matrix[clouds_bayes_in == 'A'] = self.key_values.get('gap')
         # Помечаем все пиксели занятые морской водой в нашей матрице значениями - "skip"
-        LST_matrix[biome == 0] = -200.0
+        LST_matrix[biome == 0] = self.key_values.get('skip')
 
         # Если необходимо достать матрицу биомов
         if self.biomes_instead_lst == True:
