@@ -114,32 +114,39 @@ class S3_L2_LST():
                 LST_ancillary_ds = archive.extract(LST_ancillary_ds_nc, path = self.temporary_path)
 
         flags_in = Dataset(flags_in)
-        confidence_in = np.array(flags_in.variables['confidence_in'])  # Матрица с флагами
+        confidence_in = np.array(flags_in.variables['confidence_in'])  # Матрицы с флагами
+        bayes_in = np.array(flags_in.variables['bayes_in'])
 
         # Нам необходимо найти такие значения в матрице confidence_in, в которую значение флага могло бы входить
         # в качестве слагаемого
         bits_map = ['0'] * 16384
         bits_map.append('A')
         bits_map = np.array(bits_map)
-        clouds = bits_map[confidence_in & 16384]
+        # Маска облаков по confidence_in
+        clouds_сonf_in = bits_map[confidence_in & 16384]
+
+        bits_map = np.array(['O', 'O', 'A'])
+        # Маска облаков по bayes_in
+        clouds_bayes_in = bits_map[bayes_in & 2]
 
         geodetic_in = Dataset(geodetic_in)
-        el = np.array(geodetic_in.variables['elevation_in'])                                      # Матрица высот
-        lat = np.array(geodetic_in.variables['latitude_in'])                                      # Матрица широт
-        long = np.array(geodetic_in.variables['longitude_in'])                                    # Матрица долгот
+        el = np.array(geodetic_in.variables['elevation_in'])        # Матрица высот
+        lat = np.array(geodetic_in.variables['latitude_in'])        # Матрица широт
+        long = np.array(geodetic_in.variables['longitude_in'])      # Матрица долгот
 
         LST_in = Dataset(LST_in)
-        LST_matrix = np.array(LST_in.variables['LST'])                                            # Матрица LST
+        LST_matrix = np.array(LST_in.variables['LST'])              # Матрица LST
 
         LST_ancillary_ds = Dataset(LST_ancillary_ds)
-        biome = np.array(LST_ancillary_ds.variables['biome'])                                     # Матрица биомов
+        biome = np.array(LST_ancillary_ds.variables['biome'])       # Матрица биомов
 
         # ВНИМАНИЕ! Важен порядок присвоения флагов, сначала облакам - потом, все остальное
         # Иначе мы будем заполнять пиксель от облаков, в котором значение -inf потому что это море
         # Помечаем все пиксели с облаками на нашей матрице значениями - "gap"
-        LST_matrix[clouds == 'A'] = self.key_values.get('gap')
+        LST_matrix[clouds_сonf_in == 'A'] = self.key_values.get('gap')
+        LST_matrix[clouds_bayes_in == 'A'] = self.key_values.get('skip')
         # Помечаем все пиксели занятые морской водой в нашей матрице значениями - "skip"
-        LST_matrix[biome == 0] = self.key_values.get('skip')
+        LST_matrix[biome == 0] = -200.0
 
         # Если необходимо достать матрицу биомов
         if self.biomes_instead_lst == True:
