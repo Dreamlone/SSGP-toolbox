@@ -715,5 +715,5 @@ class SimpleSpatialGapfiller():
                 # Сохранение матрицы в папку outputs
                 where_to_save = os.path.join(self.Outputs_path, file)
                 np.save(where_to_save, GD1)
-                
+
                 print('Runtime -', timeit.default_timer() - start, '\n')  # Время работы алгоритма
