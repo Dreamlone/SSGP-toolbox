@@ -664,7 +664,12 @@ class SimpleSpatialGapfiller():
             json.dump(self.metadata, json_file)
 
     # Функция, которая позволяет заполнять пропуски с помощью метода интерполяции ближайшим соседом
-    def nn_interpolation(self):
+    def nn_interpolation(self, key_values = {'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}):
+
+        # Определяем флаги для пропусков, значений, которые заполнять не нужно ошибок проецирования
+        self.gap = key_values.get('gap')
+        self.skip = key_values.get('skip')
+        self.nodata = key_values.get('NoData')
 
         files = os.listdir(self.Inputs_path)
         files.sort()
