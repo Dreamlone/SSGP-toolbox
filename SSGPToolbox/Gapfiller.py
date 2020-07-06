@@ -7,8 +7,8 @@ __make_training_sample --- creating a training sample from matrices in the "Hist
 __learning_and_fill    --- filling in gaps for the matrix, writing the result to the "Outputs" folder
 
 Public methods:
-fill_gaps --- using the __learning_and_fill method for each of the matrices in the "Inputs" folder, creating a file with metadata about the quality of the algorithm
-
+fill_gaps        --- using the __learning_and_fill method for each of the matrices in the "Inputs" folder, creating a file with metadata about the quality of the algorithm
+nn_interpolation --- using the nearest neighbor interpolation for each of the matrices in the "Inputs" folder
 '''
 
 import os
@@ -30,6 +30,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVR
 from sklearn.model_selection import KFold, cross_val_score
 from sklearn import preprocessing
+from scipy import interpolate
 
 class SimpleSpatialGapfiller():
 
@@ -661,3 +662,53 @@ class SimpleSpatialGapfiller():
         json_path = os.path.join(Outputs_path, 'Metadata.json')
         with open(json_path, 'w') as json_file:
             json.dump(self.metadata, json_file)
+
+    # Функция, которая позволяет заполнять пропуски с помощью метода интерполяции ближайшим соседом
+    def nn_interpolation(self):
+
+        files = os.listdir(self.Inputs_path)
+        files.sort()
+
+        for file in files:
+            start = timeit.default_timer()  # Засекаем время
+            matrix = np.load(os.path.join(self.Inputs_path, file))
+
+            shape = matrix.shape
+            all_pixels = shape[0] * shape[1]
+            # Если все значения в матрице - это пропуски, и т.д., то слой не заполняется
+            if all_pixels - ((matrix == self.gap).sum() + (matrix == self.skip).sum() + (matrix == self.nodata).sum()) < 5:
+                print('No calculation for matrix ', file[:-4])
+            # Если на снимке нет пропусков, то он сохранается как заполненный без применения алгоритма
+            elif (matrix == self.gap).sum() == 0:
+                where_to_save = os.path.join(self.Outputs_path, file)
+                np.save(where_to_save, matrix)
+            else:
+                # Копия матрицы для нанесения всех масок
+                copy_matrix = np.copy(matrix)
+
+                # Интерполяция производится для всех флагов - их необходимо пометить как пропуски
+                matrix[matrix == self.skip] = self.gap
+                matrix[matrix == self.nodata] = self.gap
+
+                # Смотрим как выглядит матрица в данный момент
+                masked_array = np.ma.masked_where(matrix == self.gap, matrix)
+
+                #        Interpolation        #
+                x = np.arange(0, len(matrix[0]))
+                y = np.arange(0, len(matrix))
+                Gap_matrix = masked_array
+                xx, yy = np.meshgrid(x, y)
+                x1 = xx[~Gap_matrix.mask]
+                y1 = yy[~Gap_matrix.mask]
+                newarr = Gap_matrix[~Gap_matrix.mask]
+                GD1 = interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method='nearest')
+
+                # Возвращение ранее убранных флагов
+                GD1[copy_matrix == self.skip] = self.skip
+                GD1[copy_matrix == self.nodata] = self.nodata
+
+                # Сохранение матрицы в папку outputs
+                where_to_save = os.path.join(self.Outputs_path, file)
+                np.save(where_to_save, GD1)
+
+                print('Runtime -', timeit.default_timer() - start, '\n')  # Время работы алгоритма
