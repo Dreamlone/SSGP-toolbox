@@ -685,9 +685,11 @@ class SimpleSpatialGapfiller():
                 print('No calculation for matrix ', file[:-4])
             # Если на снимке нет пропусков, то он сохранается как заполненный без применения алгоритма
             elif (matrix == self.gap).sum() == 0:
+                print('No gaps in matrix ', file[:-4])
                 where_to_save = os.path.join(self.Outputs_path, file)
                 np.save(where_to_save, matrix)
             else:
+                print('Calculations for matrix ', file[:-4])
                 # Копия матрицы для нанесения всех масок
                 copy_matrix = np.copy(matrix)
 
