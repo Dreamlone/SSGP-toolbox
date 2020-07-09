@@ -633,10 +633,10 @@ class SimpleSpatialGapfiller():
             shape = matrix.shape
             all_pixels = shape[0] * shape[1] # Все пиксели в матрице
             if all_pixels - ((matrix == self.gap).sum() + (matrix == self.skip).sum() + (matrix == self.nodata).sum()) <= 101:
-                print('No calculation for matrix ', key)
+                print('No calculation for matrix', key)
             # Если на снимке нет пропусков, то он сохранается как заполненный без применения алгоритма
             elif (matrix == self.gap).sum() == 0:
-                print('No gaps in matrix ', key)
+                print('No gaps in matrix', key)
                 npy_name = str(key) + '.npy'
                 filled_matrix_npy = os.path.join(self.Outputs_path, npy_name)
                 np.save(filled_matrix_npy, matrix)
@@ -647,7 +647,7 @@ class SimpleSpatialGapfiller():
                 # Заполняем словарь с метаданными
                 self.metadata.update({npy_name: 0.0})
             else:
-                print('Calculations for matrix ', key)
+                print('Calculations for matrix', key)
                 # Теперь в массиве есть матрица, для которой необходимо заполнить пропуски
                 keys.append(key)
                 dictionary.update({key: matrix})
@@ -682,14 +682,14 @@ class SimpleSpatialGapfiller():
             all_pixels = shape[0] * shape[1]
             # Если все значения в матрице - это пропуски, и т.д., то слой не заполняется
             if all_pixels - ((matrix == self.gap).sum() + (matrix == self.skip).sum() + (matrix == self.nodata).sum()) < 5:
-                print('No calculation for matrix ', file[:-4])
+                print('No calculation for matrix', file[:-4])
             # Если на снимке нет пропусков, то он сохранается как заполненный без применения алгоритма
             elif (matrix == self.gap).sum() == 0:
-                print('No gaps in matrix ', file[:-4])
+                print('No gaps in matrix', file[:-4])
                 where_to_save = os.path.join(self.Outputs_path, file)
                 np.save(where_to_save, matrix)
             else:
-                print('Calculations for matrix ', file[:-4])
+                print('Calculations for matrix', file[:-4])
                 # Копия матрицы для нанесения всех масок
                 copy_matrix = np.copy(matrix)
 
