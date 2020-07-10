@@ -562,14 +562,14 @@ class SimpleSpatialGapfiller():
 
                 # В зависимости от выбранной опции - в работу включается соответствующий метод
                 if method == 'RandomForest':
-                    predicted, score = Random_forest_regression(X_train, y_train, X_test, params = params)
+                    predicted, score = Random_forest_regression(X_train, np.ravel(y_train), X_test, params = params)
                 elif method == 'ExtraTrees':
-                    predicted, score = Extra_trees_regression(X_train, y_train, X_test, params = params)
+                    predicted, score = Extra_trees_regression(X_train, np.ravel(y_train), X_test, params = params)
                 elif method == 'Knn':
                     predicted, score = KNN_regression(X_train, y_train, X_test, params = params)
                 elif method == 'SVR':
                     predicted, score = SVM_regression(X_train, y_train, X_test, params = params)
-                # Подразумевается, что при незаданом методе, по умолчанию используется Лассо
+                # Подразумевается, что при незаданом методе, по     умолчанию используется Лассо
                 else:
                     predicted, score = Lasso_regression(X_train, y_train, X_test, params = params)
 
