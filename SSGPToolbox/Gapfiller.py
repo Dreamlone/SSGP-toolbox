@@ -130,7 +130,7 @@ class SimpleSpatialGapfiller():
                 max_leaf_nodes = [10, 50, 100]
                 param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split, 'max_leaf_nodes': max_leaf_nodes}
                 # Задаем модель, которую будем обучать
-                estimator = RandomForestRegressor(n_estimators = 200, n_jobs = 8)
+                estimator = RandomForestRegressor(n_estimators = 50, n_jobs = -1)
                 # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
                 optimizer = RandomizedSearchCV(estimator, param_grid, n_iter = 5, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
@@ -145,7 +145,7 @@ class SimpleSpatialGapfiller():
                 param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split,
                               'max_leaf_nodes': max_leaf_nodes}
                 # Задаем модель, которую будем обучать
-                estimator = RandomForestRegressor(n_estimators = 200, n_jobs = 8)
+                estimator = RandomForestRegressor(n_estimators = 50, n_jobs = -1)
                 # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
                 optimizer = GridSearchCV(estimator, param_grid, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
@@ -176,7 +176,7 @@ class SimpleSpatialGapfiller():
                 max_leaf_nodes = [10, 50, 100]
                 param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split, 'max_leaf_nodes': max_leaf_nodes}
                 # Задаем модель, которую будем обучать
-                estimator = ExtraTreesRegressor(n_estimators = 200, n_jobs = 8)
+                estimator = ExtraTreesRegressor(n_estimators = 50, n_jobs = -1)
                 # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
                 optimizer = RandomizedSearchCV(estimator, param_grid, n_iter = 5, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, y_train)
@@ -190,7 +190,7 @@ class SimpleSpatialGapfiller():
                 max_leaf_nodes = [10, 50, 100]
                 param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split,'max_leaf_nodes': max_leaf_nodes}
                 # Задаем модель, которую будем обучать
-                estimator = ExtraTreesRegressor(n_estimators = 200, n_jobs = 8)
+                estimator = ExtraTreesRegressor(n_estimators = 50, n_jobs = -1)
                 # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
                 optimizer = GridSearchCV(estimator, param_grid, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
