@@ -655,7 +655,7 @@ class SimpleSpatialGapfiller():
                 # Начинает работать модель
                 self.__learning_and_fill(dictionary, keys, extra_matrix = extra_matrix, method = method, predictor_configuration = predictor_configuration,
                                          hyperparameters = hyperparameters, params = params, add_outputs = add_outputs)
-            print('Runtime -', timeit.default_timer() - start, '\n')  # Время работы алгоритма
+            print('Runtime -', timeit.default_timer() - start, ' sec. \n')  # Время работы алгоритма
 
         # Сохраняем сформированный словарь с метаданными в файл JSON
         Outputs_path = os.path.join(self.directory, 'Outputs')
@@ -717,4 +717,4 @@ class SimpleSpatialGapfiller():
                 # Сохранение матрицы в папку outputs
                 where_to_save = os.path.join(self.Outputs_path, file)
                 np.save(where_to_save, GD1)
-                print('Runtime -', timeit.default_timer() - start, '\n') # Время работы алгоритма
+                print('Runtime -', timeit.default_timer() - start, ' sec. \n') # Время работы алгоритма
