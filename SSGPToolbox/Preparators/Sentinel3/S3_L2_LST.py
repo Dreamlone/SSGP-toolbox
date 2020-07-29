@@ -4,7 +4,7 @@ class S3_LST_transformer - A class for converting files from archives with LST d
 Mission: Sentinel-3
 Satellite Platform: S3A_*, S3B_*
 Product Type: SL_2_LST___
-Timeliness: "Near Real Time", "Short Time Critical", "Short Time Critical"
+Timeliness: "Near Real Time", "Short Time Critical", "Non Time Critical"
 
 Private methods:
 get_utm_code_from_extent  --- method for selecting the appropriate metric projection for the territory
