@@ -17,9 +17,10 @@ Each pixel uses its own machine learning algorithm and generates its own trainin
 
 ### Time complexity
 
-Based on the results of experiments with the model, it was found that the time complexity of the algorithm is sublinear.
+Based on the results of experiments with the model, it was found that the time complexity of the algorithm is linear.
 
 ![Complexity.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_4_Complexity.png)
+>>>The average image size was 8.500 pixels and train sample contains of 250-350 layers
 
 ### Verification
 
