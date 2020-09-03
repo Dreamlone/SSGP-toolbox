@@ -35,7 +35,7 @@ from scipy import interpolate
 class SimpleSpatialGapfiller():
 
     # When initializing the class, we must specify
-    # directory - the location of the project folder: "History", "Inputs" and "Extra"
+    # directory --- the location of the project folder: "History", "Inputs" and "Extra"
     def __init__(self, directory):
         # Threshold value for not including layers in the training selection when exceeded (changes from 0.0 to 1.0)
         self.main_threshold = 0.05
@@ -54,20 +54,20 @@ class SimpleSpatialGapfiller():
         # Creating a dictionary with data that will be filled in as the algorithm works
         self.metadata = {}
 
-    # Приватный метод формирует обучающую выборку из матриц в папке "History"
-    # return dictionary --- словарь, в котором ключу (название файла) соответсвует матрица
-    # return keys       --- отсортированный список ключей, где последний ключ - целевая матрица
+    # The private method generates a training sample from the matrices in the "History" folder
+    # return dictionary --- dictionary where the key (file name) corresponds to the matrix
+    # return keys       --- sorted list of keys, where the last key is the target matrix
     def __make_training_sample(self):
-        # Формируем словарь с матрицами и список с ключами, в котором они хранятся в строгом порядке
+        # Creating a dictionary with matrices and a list with keys, where they are stored in strict order
         history_files = os.listdir(self.History_path)
         dictionary = {}
         keys = []
         for file in history_files:
-            key_path = os.path.join(self.History_path, file) # Путь до конкрентной матрицы в обучающей выборке
-            key = file[:-4] # Ключ для матрицы
+            key_path = os.path.join(self.History_path, file) # Path to a specific matrix in the training sample
+            key = file[:-4] # Key for the matrix
             matrix = np.load(key_path)
 
-            # Если есть более main_threshold доли пикселей, которые не были сняты в этот момент времени, то матрица не включается в анализ
+            # If there is more than a main_threshold percentage of pixels that were not taken at this time, the matrix is not included in the analysis
             amount_na = (matrix == self.nodata).sum()
             shape = matrix.shape
             threshold = amount_na/(shape[0]*shape[1])
@@ -77,30 +77,30 @@ class SimpleSpatialGapfiller():
                 keys.append(key)
                 dictionary.update({key: matrix})
 
-        # Отсортируем список с ключами
+        # Sorting the list with keys
         keys.sort()
         return(dictionary, keys)
 
-    # Приватный метод - подготавливает датасет, обучает модель, записывает результат (в виде файла .npy) в указанную папку
-    # dictionary - словарь, ключ - время съемки, значение - матрица; все слои, кроме последнего - нужны для обучения
-    # keys - список ключей, где последний ключ относится к матрице, в которой необходимо заполнить пропуски
-    # method - название алгоритма (Lasso, RandomForest, ExtraTrees, Knn, SVR)
-    # predictor_configuration - подбор предикторов (All, Random, Biome)
-    # hyperparameters - выбор гиперпараметров (RandomGridSearch, GridSearch, Custom)
-    # params - если выбран аргумент "Custom", то параметры модели передаются через аргумент params
-    # add_outputs - будут ли добавляться заполненные алгоритмом слои в обучающую выборку
+    # Private method - prepares the dataset, trains the model, and writes the result (as a .npy file) to the specified folder
+    # dictionary              --- dictionary, key - timestamp of image, value - matrix; all layers except the last one are needed for training
+    # keys                    --- list of keys where the last key belongs to the matrix to fill in the gaps in
+    # method                  --- name of the algorithm (Lasso, RandomForest, ExtraTrees, Knn, SVR)
+    # predictor_configuration --- selection of predictors (All, Random, Biome)
+    # hyperparameters         --- the choice of hyperparameters (RandomGridSearch, GridSearch, Custom)
+    # params                  --- if the argument is selected "Custom", then the model parameters are passed via the params argument
+    # add_outputs             --- will the layers filled in by the algorithm be added to the training selection
     def __learning_and_fill(self, dictionary, keys, extra_matrix, method, predictor_configuration, hyperparameters, params, add_outputs):
-        # Задаем все необходимые функции
-        # Лассо регрессия
+
+        # Lasso
         def Lasso_regression(X_train, y_train, X_test, params):
-            # Поиск по сетке для Lasso в виду малого количества гиперпараметров 'GridSearch' и 'RandomGridSearch' - одно и то же
+            # Grid search for Lasso due to the small number of hyperparameters 'GridSearch' and 'RandomGridSearch' are the same
             if hyperparameters == 'RandomGridSearch' or hyperparameters == 'GridSearch':
-                # Осуществляем поиск по сетке с кросс-валидацией (число фолдов равно 3)
+                # We search the grid with cross-validation (the number of folds is 3)
                 alphas = np.arange(1, 800, 50)
                 param_grid = {'alpha': alphas}
-                # Задаем модель, которую будем обучать
+                # Setting the model to train
                 estimator = Lasso()
-                # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
+                # We train the model with the specified parameter options (we search the grid)
                 optimizer = GridSearchCV(estimator, param_grid, iid = 'deprecated', cv = 3, scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, y_train)
                 regression = optimizer.best_estimator_
@@ -108,21 +108,21 @@ class SimpleSpatialGapfiller():
                 validation_score = optimizer.best_score_
             elif hyperparameters == 'Custom':
                 estimator = Lasso()
-                # Задаем нужные параметры
+                # Setting the necessary parameters
                 estimator.set_params(**params)
 
-                # Проверка по кросс-валидации
+                # Cross-validation check
                 fold = KFold(n_splits = 3, shuffle = True)
                 validation_score = cross_val_score(estimator = estimator, X = X_train, y = y_train, cv = fold, scoring = 'neg_mean_absolute_error')
 
-                # Обучаем модель уже на всех данных
+                # Training the model already on all data
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
             return(predicted, validation_score)
 
-        # Случайный лес
+        # Random forest
         def Random_forest_regression(X_train, y_train, X_test, params):
-            # Случайный поиск по сетке
+            # Random grid search
             if hyperparameters == 'RandomGridSearch':
                 # Осуществляем поиск по сетке с кросс-валидацией (число фолдов равно 3)
                 max_depth = [5, 10, 15, 20, 25]
