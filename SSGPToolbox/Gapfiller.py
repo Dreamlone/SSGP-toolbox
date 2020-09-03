@@ -34,24 +34,24 @@ from scipy import interpolate
 
 class SimpleSpatialGapfiller():
 
-    # При инициализации класса необходмо указать
-    # directory - расположение папок проекта: "History", "Inputs", и "Extra"
+    # When initializing the class, we must specify
+    # directory - the location of the project folder: "History", "Inputs" and "Extra"
     def __init__(self, directory):
-        # Пороговое значение для невключения слоев в обучающую выборку при превышении (изменяется от 0.0 до 1.0)
+        # Threshold value for not including layers in the training selection when exceeded (changes from 0.0 to 1.0)
         self.main_threshold = 0.05
         self.directory = directory
 
-        # Создаем папку 'Outputs'; если есть, то используем существующую
+        # Creating the 'Outputs' folder; if there is, use the existing one
         self.Outputs_path = os.path.join(self.directory, 'Outputs')
         if os.path.isdir(self.Outputs_path) == False:
             os.makedirs(self.Outputs_path)
 
-        # Доступ ко всем оставшимся папкам в проекте
+        # Access to all remaining folders in the project
         self.Inputs_path = os.path.join(self.directory, 'Inputs')
         self.Extra_path = os.path.join(self.directory, 'Extra')
         self.History_path = os.path.join(self.directory, 'History')
 
-        # Создаем словарь с данными, который будет заполняться по мере работы алгоритма
+        # Creating a dictionary with data that will be filled in as the algorithm works
         self.metadata = {}
 
     # Приватный метод формирует обучающую выборку из матриц в папке "History"
