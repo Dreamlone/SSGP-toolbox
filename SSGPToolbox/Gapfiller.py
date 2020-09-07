@@ -1,6 +1,6 @@
 '''
 
-class SimpleSpatialGapfiller --- a class that allows you to fill in gaps in matrices based on machine learning method
+class SimpleSpatialGapfiller --- a class that allows to fill in gaps in matrices based on machine learning method
 
 Private methods:
 __make_training_sample --- creating a training sample from matrices in the "History" folder
@@ -124,29 +124,28 @@ class SimpleSpatialGapfiller():
         def Random_forest_regression(X_train, y_train, X_test, params):
             # Random grid search
             if hyperparameters == 'RandomGridSearch':
-                # Осуществляем поиск по сетке с кросс-валидацией (число фолдов равно 3)
+                # Carry out a random grid search with cross-validation (the number of folds is 3)
                 max_depth = [5, 10, 15, 20, 25]
                 min_samples_split = [2, 5, 10]
                 max_leaf_nodes = [10, 50, 100]
                 param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split, 'max_leaf_nodes': max_leaf_nodes}
-                # Задаем модель, которую будем обучать
+                # Set the model to be trained
                 estimator = RandomForestRegressor(n_estimators = 50, n_jobs = -1)
-                # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
+                # Train the model with the given options of parameters
                 optimizer = RandomizedSearchCV(estimator, param_grid, n_iter = 5, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
                 regression = optimizer.best_estimator_
                 predicted = regression.predict(X_test)
                 validation_score = optimizer.best_score_
-            # Полный поиск по сетке
+            # Grid search
             elif hyperparameters == 'GridSearch':
                 max_depth = [5, 10, 15, 20, 25]
                 min_samples_split = [2, 5, 10]
                 max_leaf_nodes = [10, 50, 100]
-                param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split,
-                              'max_leaf_nodes': max_leaf_nodes}
-                # Задаем модель, которую будем обучать
+                param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split, 'max_leaf_nodes': max_leaf_nodes}
+                # Set the model to be trained
                 estimator = RandomForestRegressor(n_estimators = 50, n_jobs = -1)
-                # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
+                # Train the model with the given options of parameters
                 optimizer = GridSearchCV(estimator, param_grid, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
                 regression = optimizer.best_estimator_
@@ -154,44 +153,41 @@ class SimpleSpatialGapfiller():
                 validation_score = optimizer.best_score_
             elif hyperparameters == 'Custom':
                 estimator = RandomForestRegressor()
-                # Задаем нужные параметры
+                # Set the params
                 estimator.set_params(**params)
-
-                # Проверка по кросс-валидации
+                # Cross-validation
                 fold = KFold(n_splits = 3, shuffle=True)
                 validation_score = cross_val_score(estimator = estimator, X = X_train, y = y_train, cv = fold, scoring = 'neg_mean_absolute_error')
-
-                # Обучаем модель уже на всех данных
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
             return(predicted, validation_score)
 
-        # Сверхслучайные леса
+        # Extra trees
         def Extra_trees_regression(X_train, y_train, X_test, params):
-            # Случайный поиск по сетке
+            # Random grid search
             if hyperparameters == 'RandomGridSearch':
-                # Осуществляем поиск по сетке с кросс-валидацией (число фолдов равно 3)
+                # Carry out a random grid search with cross-validation (the number of folds is 3)
                 max_depth = [5, 10, 15, 20, 25]
                 min_samples_split = [2, 5, 10]
                 max_leaf_nodes = [10, 50, 100]
                 param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split, 'max_leaf_nodes': max_leaf_nodes}
-                # Задаем модель, которую будем обучать
+                # Set the model to be trained
                 estimator = ExtraTreesRegressor(n_estimators = 50, n_jobs = -1)
-                # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
+                # Train the model with the given options of parameters
                 optimizer = RandomizedSearchCV(estimator, param_grid, n_iter = 5, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, y_train)
                 regression = optimizer.best_estimator_
                 predicted = regression.predict(X_test)
                 validation_score = optimizer.best_score_
-            # Полный поиск по сетке
+            # Full grid search
             elif hyperparameters == 'GridSearch':
                 max_depth = [5, 10, 15, 20, 25]
                 min_samples_split = [2, 5, 10]
                 max_leaf_nodes = [10, 50, 100]
                 param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split,'max_leaf_nodes': max_leaf_nodes}
-                # Задаем модель, которую будем обучать
+                # Set the model to be trained
                 estimator = ExtraTreesRegressor(n_estimators = 50, n_jobs = -1)
-                # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
+                # Train the model with the given options of parameters
                 optimizer = GridSearchCV(estimator, param_grid, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
                 regression = optimizer.best_estimator_
@@ -199,44 +195,42 @@ class SimpleSpatialGapfiller():
                 validation_score = optimizer.best_score_
             elif hyperparameters == 'Custom':
                 estimator = ExtraTreesRegressor()
-                # Задаем нужные параметры
+                # Set the params
                 estimator.set_params(**params)
 
-                # Проверка по кросс-валидации
+                # Cross-validation
                 fold = KFold(n_splits = 3, shuffle = True)
                 validation_score = cross_val_score(estimator = estimator, X = X_train, y = y_train, cv = fold, scoring = 'neg_mean_absolute_error')
-
-                # Обучаем модель уже на всех данных
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
             return(predicted, validation_score)
 
-        # К-ближайших соседей
+        # К-nearest neighbors
         def KNN_regression(X_train, y_train, X_test, params):
-            # Случайный поиск по сетке
+            # Random grid search
             if hyperparameters == 'RandomGridSearch':
-                # Осуществляем поиск по сетке с кросс-валидацией (число фолдов равно 3)
+                # Carry out a random grid search with cross-validation (the number of folds is 3)
                 weights = ['uniform', 'distance']
                 algorithm = ['auto', 'kd_tree']
                 n_neighbors = [2, 5,10,15,20]
                 param_grid = {'weights': weights, 'n_neighbors': n_neighbors, 'algorithm': algorithm}
-                # Задаем модель, которую будем обучать
+                # Set the model to be trained
                 estimator = KNeighborsRegressor()
-                # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
+                # Train the model with the given options of parameters
                 optimizer = RandomizedSearchCV(estimator, param_grid, n_iter = 5, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, y_train)
                 regression = optimizer.best_estimator_
                 predicted = regression.predict(X_test)
                 validation_score = optimizer.best_score_
-            # Полный поиск по сетке
+            # Full grid search
             elif hyperparameters == 'GridSearch':
                 weights = ['uniform', 'distance']
                 algorithm = ['auto', 'kd_tree']
                 n_neighbors = [2, 5, 10, 15, 20]
                 param_grid = {'weights': weights, 'n_neighbors': n_neighbors, 'algorithm': algorithm}
-                # Задаем модель, которую будем обучать
+                # Set the model to be trained
                 estimator = KNeighborsRegressor()
-                # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
+                # Train the model with the given options of parameters
                 optimizer = GridSearchCV(estimator, param_grid, cv = 3, iid='deprecated', scoring='neg_mean_absolute_error')
                 optimizer.fit(X_train, y_train)
                 regression = optimizer.best_estimator_
@@ -244,50 +238,48 @@ class SimpleSpatialGapfiller():
                 validation_score = optimizer.best_score_
             elif hyperparameters == 'Custom':
                 estimator = KNeighborsRegressor()
-                # Задаем нужные параметры
+                # Set the params
                 estimator.set_params(**params)
 
-                # Проверка по кросс-валидации
+                # Cross-validation
                 fold = KFold(n_splits = 3, shuffle = True)
                 validation_score = cross_val_score(estimator = estimator, X = X_train, y = y_train, cv = fold, scoring = 'neg_mean_absolute_error')
-
-                # Обучаем модель уже на всех данных
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
             return(predicted, validation_score)
 
-        # Метод опорных векторов
+        # Support Vector Machine
         def SVM_regression(X_train, y_train, X_test, params):
-            # Соединим нашу выборку для процедуры стандартизации
+            # Combine our sample for the standardization procedure
             sample = np.vstack((X_train, X_test))
 
-            # Стандартизуем выборку и снова разделяем
+            # Standardize the sample and split again
             sample = preprocessing.scale(sample)
             X_train = sample[:-1, :]
             X_test = sample[-1:, :]
 
-            # Случайный поиск по сетке
+            # Random grid search
             if hyperparameters == 'RandomGridSearch':
-                # Осуществляем поиск по сетке с кросс-валидацией (число фолдов равно 3)
+                # Carry out a random grid search with cross-validation (the number of folds is 3)
                 Cs = [0.001, 0.01, 0.1, 1, 10]
                 epsilons = [0.1, 0.4, 0.7, 1.0]
                 param_grid = {'C': Cs, 'epsilon': epsilons}
-                # Задаем модель, которую будем обучать
+                # Set the model to be trained
                 estimator = SVR(kernel = 'linear', gamma = 'scale')
-                # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
+                # Train the model with the given options of parameters
                 optimizer = RandomizedSearchCV(estimator, param_grid, n_iter = 5, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
                 regression = optimizer.best_estimator_
                 predicted = regression.predict(X_test)
                 validation_score = optimizer.best_score_
-            # Полный поиск по сетке
+            # Full grid search
             elif hyperparameters == 'GridSearch':
                 Cs = [0.001, 0.01, 0.1, 1, 10]
                 epsilons = [0.1, 0.4, 0.7, 1.0]
                 param_grid = {'C': Cs, 'epsilon': epsilons}
-                # Задаем модель, которую будем обучать
+                # Set the model to be trained
                 estimator = SVR(kernel = 'linear', gamma = 'scale')
-                # Производим обучение модели с заданными вариантами параметров (осуществляем поиск по сетке)
+                # Train the model with the given options of parameters
                 optimizer = GridSearchCV(estimator, param_grid, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
                 regression = optimizer.best_estimator_
@@ -295,21 +287,19 @@ class SimpleSpatialGapfiller():
                 validation_score = optimizer.best_score_
             elif hyperparameters == 'Custom':
                 estimator = SVR()
-                # Задаем нужные параметры
+                # Set the params
                 estimator.set_params(**params)
 
-                # Проверка по кросс-валидации
+                # Cross-validation
                 fold = KFold(n_splits = 3, shuffle = True)
                 validation_score = cross_val_score(estimator = estimator, X = X_train, y = np.ravel(y_train), cv = fold, scoring = 'neg_mean_absolute_error')
-
-                # Обучаем модель уже на всех данных
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
 
             return(predicted, validation_score)
 
         def all_points(coord_row, coord_column, final_matrix):
-            # Индексы всех точек, которые не закрыты облаками (в том числе пиксели со значением skip, nodata)
+            # The indices of all points that are not covered by clouds (including pixels with a value skip, nodata)
             coords = np.argwhere(final_matrix != self.gap)
             coords = list(coords)
             coords.append([coord_row, coord_column])
