@@ -305,8 +305,9 @@ class SimpleSpatialGapfiller():
             coords.append([coord_row, coord_column])
             coords = np.array(coords)
 
-            # Для каждой матрицы из словаря по известным координатам (индексам) снимаем значения параметра и записываем в датасет
-            # Последняя строка в датасете - значения для матрицы, которую необходимо загэпфилить :)
+            # For each matrix from the dictionary by known coordinates (indexes), we remove the parameter
+            # values and write them to the dataset
+            # The last row in the dataset is the values for the matrix to be filled in
             dataframe = []
             for key in keys:
                 matrix = dictionary.get(key)
@@ -319,13 +320,13 @@ class SimpleSpatialGapfiller():
             return (dataframe)
 
         def random_points(coord_row, coord_column, final_matrix):
-            # Осуществляем случайный выбор точек
+            # Make a random selection of points
             shape = final_matrix.shape
             n_strings = shape[0]
             n_columns = shape[1]
 
             coords = []
-            # Если значение в случайной точке равно gap, skip или nodata, то оно не добавляется
+            # If the value at a random point is equal to gap, skip, or nodata, it is not added
             number_iter = 0
             while number_iter <= 100:
                 random_i = random.randint(0, n_strings - 1)
@@ -337,19 +338,20 @@ class SimpleSpatialGapfiller():
                     pass
                 elif final_matrix[random_i, random_j] == self.nodata:
                     pass
-                # Если у нас уже есть такая пара в списке, то мы не добавляем его в список
+                # If we already have such a pair in the list, we don't add it to the list
                 elif any(tuple(coordinates) == tuple(element) for element in coords):
                     pass
                 else:
                     coords.append(coordinates)
                     number_iter += 1
 
-            # Добавляем координаты точки, для которой подбираются опорные точки (она всегда занимает последнее место в датасете)
+            # Adding the coordinates of the point for which reference points are selected (it always takes the last place in the dataset)
             coords.append([coord_row, coord_column])
             coords = np.array(coords)
 
-            # Для каждой матрицы из словаря по известным координатам (индексам) снимаем значения параметра и записываем в датасет
-            # Последняя строка в датасете - значения для матрицы, которую необходимо загэпфилить :)
+            # For each matrix from the dictionary by known coordinates (indexes), we remove the parameter
+            # values and write them to the dataset
+            # The last row in the dataset is the values for the matrix to be filled in
             dataframe = []
             for key in keys:
                 matrix = dictionary.get(key)
@@ -362,49 +364,48 @@ class SimpleSpatialGapfiller():
             return (dataframe)
 
         def biome_points(coord_row, coord_column, final_matrix, extra_matrix):
-            # Индекс строки и столбца для пикселя, который необходимо заполнить
-            extra_code = extra_matrix[coord_row, coord_column]  # Код биома (группы пикселей) для пикселя, который мы хотим узнать
+            # Index of the row and column for the pixel to be filled in
+            extra_code = extra_matrix[coord_row, coord_column]  # Code of the biome (group of pixels) for the pixel we want to find out
 
-            # Важный момент - мы присваиваем всем значениям пикселей в копии матрицы биомов, если они закрыты облаком, значение -100.0
+            # An important moment is that we assign all pixel values in the copy of the biome matrix, if they are covered by the cloud, the value gap
             new_extra_matrix = np.copy(extra_matrix)
             new_extra_matrix[final_matrix == self.gap] = self.gap
 
-            # Индексы точек, которые попадают в данный биом и при этом в данный момент не являются пропусками
+            # Indexes of points that fall into this biome and are not currently omitted
             coords = np.argwhere(new_extra_matrix == extra_code)
             if len(coords) > 41:
-                ''' Биом подходит в качестве кластера '''
+                ''' The biome is suitable as a cluster '''
 
                 # Рассчет расстояния целевого пикселя от тех, которые были выбраны в качестве предикторов (по индексам)
                 target_pixel = np.array([[coord_row, coord_column]])
-                # Вектор из рассчитаных расстояний от целевого пикселя до всех остальных
+                # Vector of calculated distances from the target pixel to all other pixels
                 distances = scipy.spatial.distance.cdist(target_pixel, coords)[0]
                 new_coords = []
                 for iter in range(0,40):
-                    # Какой индекс в массиве coords имеет элемент с наименьшим расстоянием от целевого пикселя
+                    # Which index in the coords array has the element with the smallest distance from the target pixel
                     index_min_dist = np.argmin(distances)
 
-                    # Координата данного пикселя в матрице
+                    # The coordinate of this pixel in the matrix
                     new_coord = coords[index_min_dist]
-
-                    # Добавляем координаты
                     new_coords.append(new_coord)
 
-                    # Заменяем минимальный элемент из массива на очень большое число
+                    # Replacing the minimum element from the array with a very large number
                     distances[index_min_dist] = np.inf
 
-                # Добавляем к нашем координатам в самый конец индекс пикселя, для которого строится модель
+                # Adding the index of the pixel for which the model is being built
                 coords = list(new_coords)
                 coords.append([coord_row, coord_column])
                 coords = np.array(coords)
             else:
-                '''Недостаточно объектов в данном биоме! Выбираем 100 случайных точек.'''
-                # Осуществляем случайный выбор точек
+                '''There are not enough objects in this biome! Choose 100 random points'''
+
+                # Make a random selection of points
                 shape = final_matrix.shape
                 n_strings = shape[0]
                 n_columns = shape[1]
 
                 coords = []
-                # Если значение в случайной точке равно gap, skip или nodata, то оно не добавляется
+                # If the value at a random point is equal to gap, skip, or nodata, it is not added
                 number_iter = 0
                 while number_iter <= 100:
                     random_i = random.randint(0, n_strings - 1)
@@ -416,7 +417,7 @@ class SimpleSpatialGapfiller():
                         pass
                     elif final_matrix[random_i, random_j] == self.nodata:
                         pass
-                    # Если у нас уже есть такая пара в списке, то мы не добавляем его в список
+                    # If we already have such a pair in the list, we don't add it to the list
                     elif any(tuple(coordinates) == tuple(element) for element in coords):
                         pass
                     else:
@@ -424,31 +425,30 @@ class SimpleSpatialGapfiller():
                         number_iter += 1
                 coords = np.array(coords)
 
-                # Рассчет расстояния целевого пикселя от тех, которые были выбраны в качестве предикторов (по индексам)
+                # The calculation of the distance of the target pixel from those that were selected as predictors (index)
                 target_pixel = np.array([[coord_row, coord_column]])
-                # Вектор из рассчитаных расстояний от целевого пикселя до всех остальных
+                # Vector of calculated distances from the target pixel to all other pixels
                 distances = scipy.spatial.distance.cdist(target_pixel, coords)[0]
                 new_coords = []
                 for iter in range(0, 40):
-                    # Какой индекс в массиве coords имеет элемент с наименьшим расстоянием от целевого пикселя
+                    # Which index in the coords array has the element with the smallest distance from the target pixel
                     index_min_dist = np.argmin(distances)
 
-                    # Координата данного пикселя в матрице
+                    # The coordinate of this pixel in the matrix
                     new_coord = coords[index_min_dist]
-
-                    # Добавляем координаты
                     new_coords.append(new_coord)
 
-                    # Заменяем минимальный элемент из массива на очень большое число
+                    # Replacing the minimum element from the array with a very large number
                     distances[index_min_dist] = np.inf
 
-                # Добавляем координаты точки, для которой подбираются опорные точки (она всегда занимает последнее место в датасете)
+                # Adding the coordinates of the point for which reference points are selected (it always takes the last place in the dataset)
                 coords = list(new_coords)
                 coords.append([coord_row, coord_column])
                 coords = np.array(coords)
 
-            # Для каждой матрицы из словаря по известным координатам (индексам) снимаем значения парметра и записываем в датасет
-            # Последняя строка в датасете - значения для матрицы, которую необходимо загэпфилить :)
+            # For each matrix from the dictionary by known coordinates (indexes), we remove the parameter
+            # values and write them to the dataset
+            # The last row in the dataset is the values for the matrix to be filled in
             dataframe = []
             for key in keys:
                 matrix = dictionary.get(key)
@@ -460,66 +460,66 @@ class SimpleSpatialGapfiller():
             dataframe = pd.DataFrame(dataframe)
             return(dataframe)
 
-        final_matrix = dictionary.get(keys[-1]) # Та матрица, которую необходимо заполнить
-        # Отмечаем индексы точек, которые необходимо заполнить
+        final_matrix = dictionary.get(keys[-1]) # The matrix to fill in
+        # Mark the indexes of points that need to be filled in
         gaps = np.argwhere(final_matrix == self.gap)
         print('Number of gap pixels -', len(gaps))
 
-        # Делаем копию матрицы - в неё мы будем записывать значения после применения алгоритма
+        # Make a copy of the matrix - we will write the values to it after applying the algorithm
         filled_matrix = np.copy(final_matrix)
 
-        # МОДЕЛЬ ОБУЧАЕТСЯ ПОПИКСЕЛЬНО
-        # scores - массив, который будет содержать значения ошибок при кросс-валидации
-        scores =[]
+        # THE MODEL IS TRAINED PIXEL BY PIXEL
+        # scores - an array that will contain error values during cross-validation
+        scores = []
         for gap_pixel in gaps:
             coord_row = gap_pixel[0]
             coord_column = gap_pixel[1]
 
-            # Составляем датасет для обучения модели
+            # Creating a dataset for model training
             if predictor_configuration == 'Biome':
                 dataframe = biome_points(coord_row, coord_column, final_matrix = final_matrix, extra_matrix = extra_matrix)
             elif predictor_configuration == 'All':
                 dataframe = all_points(coord_row, coord_column, final_matrix = final_matrix)
-            # Подразумевается, что при незаданом методе, по умолчанию используется случайный выбор предикторов
+            # If the method is not set, a random selection of predictors is used by default
             else:
                 dataframe = random_points(coord_row, coord_column, final_matrix = final_matrix)
 
-            # Осуществляем подготовку данных для датасета
-            # Если в крайнем правом столбце есть хотя бы одно значение skip, то данный пиксель не будет тронут алгоритмом
-            # Автоматически присваивается значение skip
+            # Preparing data for the dataset
+            # If there is at least one skip value in the rightmost column, this pixel will not be affected by the algorithm
+            # The skip value is automatically assigned
             if any(value == self.skip for value in np.array(dataframe)[:,-1]):
                 predicted = self.skip
             else:
-                # Необходимо удалить те столбцы, в которых есть хотя бы одно значение skip (те значения, которые не нужно заполнять)
+                # We must delete those columns that have at least one skip value (those values that do not need to be filled in)
                 dataframe.replace(self.skip, np.nan, inplace=True)
                 dataframe.dropna(axis = 'columns', inplace = True)
 
-                # Зададим новые названия столбцов
+                # Setting new column names
                 new_columns = range(0, len(dataframe.columns))
                 col_names = []
                 for i in new_columns:
                     col_names.append(str(i))
                 dataframe.set_axis(col_names, axis = 1, inplace = True)
 
-                # Присваиваем оставшимся флагам значение Nan
+                # Assign the remaining flags the value Nan
                 dataframe.replace(self.nodata, np.nan, inplace = True)
                 dataframe.replace(self.gap, np.nan, inplace = True)
 
-                dataframe = dataframe.dropna(how = 'all')  # Удаляем те строки, где по всем признакам имеем пропуски (облако закрыло всю территорию)
+                dataframe = dataframe.dropna(how = 'all')  # We delete those lines where we have omissions for all signs (the cloud has closed the entire territory)
 
-                last_string = np.array(dataframe.iloc[-1:, :-1])  # Берем последнюю строку из датасета (кроме последнего элемента в ней)
+                last_string = np.array(dataframe.iloc[-1:, :-1])  # Take the last row from the dataset (except for the last element in it)
                 last_string = np.ravel(last_string)
-                last_string_na = np.ravel(np.isnan(last_string))  # Выставляем True, где есть пропуски
-                indexes_na = np.ravel(np.argwhere(last_string_na == True))  # Получаем список из индексов столбцов, в которых есть пропуски в последней строке
+                last_string_na = np.ravel(np.isnan(last_string))  # Setting True where there are gaps
+                indexes_na = np.ravel(np.argwhere(last_string_na == True))  # Get a list of column indexes that have gaps in the last row
                 indexes_na_str = []
                 for i in indexes_na:
                     indexes_na_str.append(str(i))
 
-                # Если в последней строчке датасета есть пропуски, то удаляем столбцы с пропусками
+                # If there are gaps in the last row of the dataset, then delete the columns with gaps
                 if len(indexes_na_str) > 0:
                     for i in indexes_na_str:
                         dataframe.drop([i], axis = 1, inplace = True)
-                    # Необходимо заново перезадать индексы для столбцов
+                    # You must re-set the indexes for the columns
                     new_names = range(0, len(dataframe.columns))
                     new = []
                     for i in new_names:
@@ -528,21 +528,21 @@ class SimpleSpatialGapfiller():
                 else:
                     pass
 
-                # Заполняем в датафрейме медианным значением по столбцу
+                # Fill in the dataframe with the median value for the column
                 def col_median(index):
-                    sample = np.array(dataframe[index].dropna()) # Ищем медианное значение по столбцу
+                    sample = np.array(dataframe[index].dropna()) # Looking for the median value by column
                     median = np.median(sample)
                     return(median)
 
-                for i in range(0,len(dataframe.columns)-1): # В последнем столбце целевая функция, поэтому в нем пропуски мы пока не трогаем
+                for i in range(0,len(dataframe.columns)-1): # The last column contains the target, so we don't touch the gaps in it yet
                     i = str(i)
                     dataframe[i].fillna(col_median(i), inplace = True)
 
-                # Разделим датафрейм на обучающую выборку и на объект, для которого необходимо предсказать значение
+                # Divide the dataframe into a training sample and an object to predict the value for
                 train = dataframe.iloc[:-1, :]
                 test = dataframe.iloc[-1:, :]
 
-                # Из обучающей выборки исключаем все объекты с пропуском в целевой функции
+                # We exclude all objects with omission in the target function from the training sample
                 train = train.dropna()
 
                 X_train = np.array(train.iloc[:, :-1])
@@ -550,7 +550,7 @@ class SimpleSpatialGapfiller():
 
                 X_test = np.array(test.iloc[:, :-1])
 
-                # В зависимости от выбранной опции - в работу включается соответствующий метод
+                # Depending on the selected option, the corresponding method is enabled
                 if method == 'RandomForest':
                     predicted, score = Random_forest_regression(X_train, np.ravel(y_train), X_test, params = params)
                 elif method == 'ExtraTrees':
@@ -559,72 +559,72 @@ class SimpleSpatialGapfiller():
                     predicted, score = KNN_regression(X_train, y_train, X_test, params = params)
                 elif method == 'SVR':
                     predicted, score = SVM_regression(X_train, y_train, X_test, params = params)
-                # Подразумевается, что при незаданом методе, по     умолчанию используется Лассо
+                # If the method is not set, the Lasso-regression is used by default
                 else:
                     predicted, score = Lasso_regression(X_train, y_train, X_test, params = params)
 
-                # Значение ошибки в тесте при кросс-валидации записываем в отдельный массив
+                # The value of the error in the test during cross-validation is recorded in a separate array
                 scores.append(abs(score))
 
-            # В матрицу записываем предсказанное алгоритмом значение
+            # Write the value predicted by the algorithm to the matrix
             filled_matrix[coord_row, coord_column] = predicted
 
         npy_name = str(keys[-1]) + '.npy'
         filled_matrix_npy = os.path.join(self.Outputs_path, npy_name)
         np.save(filled_matrix_npy, filled_matrix)
-        # Если параметр "add_outputs" принимает значение True, то заполненный моделью слой включается в обучяющую выборку
+        # If the "add_outputs" parameter is set to True, the layer filled in by the model is included in the training selection
         if add_outputs == True:
             filled_matrix_history_npy = os.path.join(self.History_path, npy_name)
             np.save(filled_matrix_history_npy, filled_matrix)
 
-        # Теперь займемся ошибками полученными по кросс-валидации
+        # Now let's look at the errors received from cross-validation
         scores = np.array(scores)
         mean_score = np.mean(scores)
         print('Mean absolute error for cross-validation -', mean_score)
-        # Заполняем метаданные необходимыми сведениями: насколько хорошо данный алгоритм отработал на данной матрице
+        # Fill in the metadata with the necessary information: how well this algorithm worked on this matrix
         self.metadata.update({npy_name: mean_score})
 
-    # Обертка над представленными выше методами, запускает алгоритм
-    # method - название алгоритма (Lasso, RandomForest, ExtraTrees, Knn, SVR)
-    # predictor_configuration - подбор предикторов (All, Random, Biome)
-    # hyperparameters - выбор гиперпараметров (RandomGridSearch, GridSearch, Custom)
-    # params - если выбран аргумент "Custom", то параметры модели передаются через аргумент params
-    # add_outputs - будут ли добавляться заполненные алгоритмом слои в обучающую выборку
-    # key_values - словарь с обозначениями пропусков, нерелевантных и отсутствующих значений
-    # В папке проекта "Outputs" создаются матрицы с заполненными пропусками в формате .npy
-    # Формируется JSON файл с оценкой качества работы алгоритма на каждой матрице
+    # Wrapper over the methods presented above, starts the algorithm for filling in gaps
+    # method - the name of the algorithm (Lasso, RandomForest, ExtraTrees, Knn, SVR)
+    # predictor_configuration - selection of predictors (All, Random, Biome)
+    # hyperparameters - the choice of hyperparameters (RandomGridSearch, GridSearch, Custom)
+    # params - if the "Custom" argument is selected, the model parameters are passed through the params argument
+    # add_outputs - will the layers filled in by the algorithm be added to the training sample
+    # key_values - dictionary with omissions, irrelevant and missing values
+    # In the project folder "Outputs", matrices with filled-in gaps are created in the .npy format
+    # A JSON file with quality metrics for each matrix
     def fill_gaps(self, method = 'Lasso', predictor_configuration = 'Random', hyperparameters = 'RandomGridSearch',
                      params = None, add_outputs = False, key_values = {'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}):
-        # Определяем флаги для пропусков, значений, которые заполнять не нужно ошибок проецирования
+        # Defining flags for gaps, skips and NoData
         self.gap = key_values.get('gap')
         self.skip = key_values.get('skip')
         self.nodata = key_values.get('NoData')
 
         if predictor_configuration == 'Biome':
-            # Получаем матрицу для разбиения пикселей на группы
+            # We get a matrix for dividing pixels into groups
             Extra_file = os.path.join(self.Extra_path, 'Extra.npy')
             extra_matrix = np.load(Extra_file)
         else:
             extra_matrix = None
 
-        # Файлы, в которых необходимо заполнить пропуски
+        # Files where we need to fill in the gaps
         inputs_files = os.listdir(self.Inputs_path)
         inputs_files.sort()
         for input in inputs_files:
-            start = timeit.default_timer()  # Засекаем время
-            # Применим метод для сведения матриц в ассоциативный массив, и так как словарь неупорядочен, то запишем ключи в строгом порядке в список keys
-            dictionary, keys = self.__make_training_sample() # Пока в словаре только матрицы из обучающей выборки
+            start = timeit.default_timer()
+            # We apply the method to reduce matrices to an associative array, and since the dictionary is unordered, we write the keys in strict order in the keys list
+            dictionary, keys = self.__make_training_sample() # So far, the dictionary only contains matrices from the training sample
 
-            input_path = os.path.join(self.Inputs_path, input)  # Путь до конкрентной матрицы в папке "Inputs"
-            key = input[:-4]  # Ключ для матрицы
+            input_path = os.path.join(self.Inputs_path, input)  # Path to the concrete matrix in the "Inputs" folder
+            key = input[:-4]  # Key for the matrix
             matrix = np.load(input_path)
 
-            # Если мы имеем менее 101 незакрытых пикселей на сцене, то рассчет не производится
+            # If we have less than 101 unclosed pixels on the scene, the calculation is not performed
             shape = matrix.shape
-            all_pixels = shape[0] * shape[1] # Все пиксели в матрице
+            all_pixels = shape[0] * shape[1]
             if all_pixels - ((matrix == self.gap).sum() + (matrix == self.skip).sum() + (matrix == self.nodata).sum()) <= 101:
                 print('No calculation for matrix', key)
-            # Если на снимке нет пропусков, то он сохранается как заполненный без применения алгоритма
+            # If there are no gaps in the image, it is saved as filled in without using the algorithm
             elif (matrix == self.gap).sum() == 0:
                 print('No gaps in matrix', key)
                 npy_name = str(key) + '.npy'
@@ -634,29 +634,29 @@ class SimpleSpatialGapfiller():
                 if add_outputs == True:
                     filled_matrix_npy = os.path.join(self.History_path, npy_name)
                     np.save(filled_matrix_npy, matrix)
-                # Заполняем словарь с метаданными
+                # Filling in the dictionary with metadata
                 self.metadata.update({npy_name: 0.0})
             else:
                 print('Calculations for matrix', key)
-                # Теперь в массиве есть матрица, для которой необходимо заполнить пропуски
+                # Now there is a matrix in the array for which you need to fill in the gaps
                 keys.append(key)
                 dictionary.update({key: matrix})
 
-                # Начинает работать модель
+                # Start the model
                 self.__learning_and_fill(dictionary, keys, extra_matrix = extra_matrix, method = method, predictor_configuration = predictor_configuration,
                                          hyperparameters = hyperparameters, params = params, add_outputs = add_outputs)
-            print('Runtime -', timeit.default_timer() - start, 'sec. \n')  # Время работы алгоритма
+            print('Runtime -', timeit.default_timer() - start, 'sec. \n')
 
-        # Сохраняем сформированный словарь с метаданными в файл JSON
+        # Saving the generated dictionary with metadata to a JSON file
         Outputs_path = os.path.join(self.directory, 'Outputs')
         json_path = os.path.join(Outputs_path, 'Metadata.json')
         with open(json_path, 'w') as json_file:
             json.dump(self.metadata, json_file)
 
-    # Функция, которая позволяет заполнять пропуски с помощью метода интерполяции ближайшим соседом
+    # A function that allows to fill in gaps using the nearest neighbor interpolation method
     def nn_interpolation(self, key_values = {'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}):
 
-        # Определяем флаги для пропусков, значений, которые заполнять не нужно ошибок проецирования
+        # Defining flags for gaps, skips and NoData
         self.gap = key_values.get('gap')
         self.skip = key_values.get('skip')
         self.nodata = key_values.get('NoData')
@@ -665,29 +665,29 @@ class SimpleSpatialGapfiller():
         files.sort()
 
         for file in files:
-            start = timeit.default_timer()  # Засекаем время
+            start = timeit.default_timer()
             matrix = np.load(os.path.join(self.Inputs_path, file))
 
             shape = matrix.shape
             all_pixels = shape[0] * shape[1]
-            # Если все значения в матрице - это пропуски, и т.д., то слой не заполняется
-            if all_pixels - ((matrix == self.gap).sum() + (matrix == self.skip).sum() + (matrix == self.nodata).sum()) < 5:
+            # If all the values in the matrix are gaps, etc., then the layer is not filled in
+            if all_pixels - ((matrix == self.gap).sum() + (matrix == self.skip).sum() + (matrix == self.nodata).sum()) <= 10:
                 print('No calculation for matrix', file[:-4])
-            # Если на снимке нет пропусков, то он сохранается как заполненный без применения алгоритма
+            # If there are no gaps in the image, it is saved as filled in without using the algorithm
             elif (matrix == self.gap).sum() == 0:
                 print('No gaps in matrix', file[:-4])
                 where_to_save = os.path.join(self.Outputs_path, file)
                 np.save(where_to_save, matrix)
             else:
                 print('Calculations for matrix', file[:-4])
-                # Копия матрицы для нанесения всех масок
+                # Copy of the matrix for applying all masks
                 copy_matrix = np.copy(matrix)
 
-                # Интерполяция производится для всех флагов - их необходимо пометить как пропуски
+                # Interpolation is performed for all flags - they must be marked as gaps
                 matrix[matrix == self.skip] = self.gap
                 matrix[matrix == self.nodata] = self.gap
 
-                # Смотрим как выглядит матрица в данный момент
+                # Let's see what the matrix looks like at the moment
                 masked_array = np.ma.masked_where(matrix == self.gap, matrix)
 
                 #        Interpolation        #
@@ -700,11 +700,11 @@ class SimpleSpatialGapfiller():
                 newarr = Gap_matrix[~Gap_matrix.mask]
                 GD1 = interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method='nearest')
 
-                # Возвращение ранее убранных флагов
+                # The return of previously removed flags
                 GD1[copy_matrix == self.skip] = self.skip
                 GD1[copy_matrix == self.nodata] = self.nodata
 
-                # Сохранение матрицы в папку outputs
+                # Saving the matrix to the outputs folder
                 where_to_save = os.path.join(self.Outputs_path, file)
                 np.save(where_to_save, GD1)
-                print('Runtime -', timeit.default_timer() - start, 'sec. \n') # Время работы алгоритма
+                print('Runtime -', timeit.default_timer() - start, 'sec. \n')
