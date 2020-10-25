@@ -28,29 +28,29 @@ from pyproj import Proj, transform
 
 class S3_L2_LST():
 
-    # file_path  --- путь до архива
-    # extent     --- словарь формата {'minX': ..., 'minY': ...,'maxX': ..., 'maxY': ...}, где указаны координаты в WGS
-    # resolution --- словарь формата {'xRes': 1000, 'yRes': 1000}, пространственное разрешение, единицы измерения, разрешение по X, по Y
-    # key_values --- словарь формата {'gap': -100.0, 'skip': -200.0,'noData': -32768.0}, обозначающий пропущенные пиксели
-    # При инициализации формируется словарь с метаданными self.metadata
+    # file_path  --- the path to the archive
+    # extent     --- dictionary {'minX': ..., 'minY': ...,'maxX': ..., 'maxY': ...}, where are the coordinates in WGS
+    # resolution --- dictionary {'xRes': 1000, 'yRes': 1000}, spatial resolution, units of measurement, x-resolution, Y-resolution
+    # key_values --- dictionary {'gap': -100.0, 'skip': -200.0,'noData': -32768.0}, indicates missing pixels
+    # When initializing a dictionary is generated with the metadata of the self.metadata
     def __init__(self, file_path, extent, resolution, key_values = {'gap': -100.0, 'skip': -200.0,'NoData': -32768.0}):
         self.file_path = file_path
         self.extent = extent
         self.resolution = resolution
         self.key_values = key_values
 
-        # Разбираемся с директориями, что и где будем размещать
+        # We are dealing with directories, what and where we will place them
         main_path = os.path.split(self.file_path)[0]
-        self.temporary_path = os.path.join(main_path, 'temporary') # Временная директория, в которую будут складываться все файлы
+        self.temporary_path = os.path.join(main_path, 'temporary') # Temporary directory where all files will be stored
 
-        # Подбор наиболее подходящей метрической проекции
+        # Selecting the most appropriate metric projection
         self.utm_code, self.utm_extent = self.__get_utm_code_from_extent()
-        # Записываем в переменные сведения о спутнике и дате съемки
+        # We write information about the satellite and the date of shooting to variables
         archive_name = os.path.basename(self.file_path)
         self.datetime = archive_name[16:31]
         self.satellite = archive_name[0:3]
 
-        # Формируем словарь с метаданными
+        # Creating a dictionary with metadata
         self.metadata = {}
         self.metadata.update({'file_name': archive_name,
                               'satellite': self.satellite,
@@ -60,9 +60,9 @@ class S3_L2_LST():
                               'utm_extent': self.utm_extent,
                               'resolution': self.resolution,})
 
-    # Приватный метод для подбора наиболее подходящей метрической проекции, вызывается при инициализации класса
-    # return utm_code   --- код UTM проекции
-    # return utm_extent --- словарь формата {'minX': ..., 'minY': ...,'maxX': ..., 'maxY': ...}, где указаны координаты в UTM
+    # The private method for the selection of the most appropriate metric projection is called when initializing the class
+    # return utm_code   --- UTM projection code
+    # return utm_extent --- dictionary {'minX': ..., 'minY': ...,'maxX': ..., 'maxY': ...}, where are the coordinates in UTM
     def __get_utm_code_from_extent(self):
         minX = self.extent.get('minX')
         minY = self.extent.get('minY')
@@ -70,7 +70,7 @@ class S3_L2_LST():
         maxY = self.extent.get('maxY')
 
         y_centroid = (minY + maxY) / 2
-        # 326NN или 327NN- где NN это номер зоны
+        # 326NN or 327NN - where NN is the zone number
         if y_centroid < 0:
             base_code = 32700
         else:
@@ -87,18 +87,18 @@ class S3_L2_LST():
         utm_extent = {'minX': min_corner[0], 'minY': min_corner[1],'maxX': max_corner[0], 'maxY': max_corner[1]}
         return(utm_code, utm_extent)
 
-    # Приватный метод для формирования необходимых файлов для пространственной привязки NetCDF матриц
-    # return warpOptions  --- список опций для формирования привязанного растра
-    # return imageVRTPath --- путь до сгенерированного растра
+    # Private method for generating the necessary files for spatial binding of NetCDF matrices
+    # return warpOptions  --- list of options for creating a linked raster
+    # return imageVRTPath --- path to the generated raster
     def __preparation(self):
-        # Определение временной директории - если её не существует (что скорее всего так), то создаем её
+        # Defining a temporary directory - if it doesn't exist (which is most likely the case), then create it
         if os.path.isdir(self.temporary_path) == False:
             os.mkdir(self.temporary_path)
 
-        archive = zipfile.ZipFile(self.file_path, 'r')  # Открываем архив
-        arch_files = archive.namelist()  # Какие есть папки/файлы в архиве
+        archive = zipfile.ZipFile(self.file_path, 'r')  # Opening the archive
+        arch_files = archive.namelist()  # What are the folders/files in the archive
 
-        # Обращаемся к файлам NetCDF в архиве, предварительно извлекая из архивов файлы в temporary_path
+        # Accessing the NetCDF files in the archive, first extracting the files in temporary_path from the archives
         for file in arch_files:
             if file.endswith("geodetic_in.nc"):
                 geodetic_in_nc = file
@@ -114,64 +114,64 @@ class S3_L2_LST():
                 LST_ancillary_ds = archive.extract(LST_ancillary_ds_nc, path = self.temporary_path)
 
         flags_in = Dataset(flags_in)
-        confidence_in = np.array(flags_in.variables['confidence_in'])  # Матрицы с флагами
+        confidence_in = np.array(flags_in.variables['confidence_in'])  # Matrices with flags
         bayes_in = np.array(flags_in.variables['bayes_in'])
 
-        # Нам необходимо найти такие значения в матрице confidence_in, в которую значение флага могло бы входить
-        # в качестве слагаемого
+        # We need to find such values in the confidence_in matrix, in which the flag value could be included
+        # as a summand
         bits_map = ['0'] * 16384
         bits_map.append('A')
         bits_map = np.array(bits_map)
-        # Маска облаков по confidence_in
+        # The mask of clouds in confidence_in
         clouds_сonf_in = bits_map[confidence_in & 16384]
 
         bits_map = np.array(['O', 'O', 'A'])
-        # Маска облаков по bayes_in
+        # The mask of clouds in bayes_in
         clouds_bayes_in = bits_map[bayes_in & 2]
 
         geodetic_in = Dataset(geodetic_in)
-        el = np.array(geodetic_in.variables['elevation_in'])        # Матрица высот
-        lat = np.array(geodetic_in.variables['latitude_in'])        # Матрица широт
-        long = np.array(geodetic_in.variables['longitude_in'])      # Матрица долгот
+        el = np.array(geodetic_in.variables['elevation_in'])
+        lat = np.array(geodetic_in.variables['latitude_in'])
+        long = np.array(geodetic_in.variables['longitude_in'])
 
         LST_in = Dataset(LST_in)
-        LST_matrix = np.array(LST_in.variables['LST'])              # Матрица LST
+        LST_matrix = np.array(LST_in.variables['LST'])
 
         LST_ancillary_ds = Dataset(LST_ancillary_ds)
-        biome = np.array(LST_ancillary_ds.variables['biome'])       # Матрица биомов
+        biome = np.array(LST_ancillary_ds.variables['biome'])
 
-        # ВНИМАНИЕ! Важен порядок присвоения флагов, сначала облакам - потом, все остальное
-        # Иначе мы будем заполнять пиксель от облаков, в котором значение -inf потому что это море
-        # Помечаем все пиксели с облаками на нашей матрице значениями - "gap"
+        # ATTENTION! The order in which flags are assigned is important, first to clouds , then to everything else
+        # Otherwise, we will fill the pixel from the clouds, where the value is-inf because it is the sea
+        # We mark all pixels with clouds on our matrix with the values - "gap"
         LST_matrix[clouds_сonf_in == 'A'] = self.key_values.get('gap')
         LST_matrix[clouds_bayes_in == 'A'] = self.key_values.get('gap')
-        # Помечаем все пиксели занятые морской водой в нашей матрице значениями - "skip"
+        # We mark all pixels occupied by sea water in our matrix with the values - " skip"
         LST_matrix[biome == 0] = self.key_values.get('skip')
 
-        # Если необходимо достать матрицу биомов
+        # If we need to get the biome matrix
         if self.biomes_instead_lst == True:
             div = np.ma.array(biome)
-        # Иначе обрабатывается матрица LST
+        # Otherwise, the LST matrix is processed
         else:
             div = np.ma.array(LST_matrix)
         div = np.flip(div, axis = 0)
         lats = np.flip(lat, axis = 0)
         lons = np.flip(long, axis = 0)
 
-        # Список из строк, которые больше стольки-то градусов и меньше стольки-то градусов по широте, берем с запасом
+        # A list of lines that are greater than so many degrees and less than so many degrees in latitude, we take with a margin
         Higher_border = self.extent.get('maxY') + 10
         Lower_border = self.extent.get('minY') - 10
 
         wrong_raws_1 = np.unique(np.argwhere(lats > Higher_border)[:, 0])
         wrong_raws_2 = np.unique(np.argwhere(lats < Lower_border)[:, 0])
-        # Объединяем списки индексов строк, которые необходимо убрать
+        # Combining lists of row indexes that need to be removed
         wrong_raws = np.hstack((wrong_raws_1, wrong_raws_2))
 
         div = np.delete(div, (wrong_raws), axis = 0)
         lats = np.delete(lats, (wrong_raws), axis = 0)
         lons = np.delete(lons, (wrong_raws), axis = 0)
 
-        # выставим настройки типа данных и типа используемого драйвера, а также всех путей:
+        # Set the settings for the data type and the type of driver used, as well as all paths:
         dataType = gdal.GDT_Float64
         driver = gdal.GetDriverByName("GTiff")
         latPath = os.path.join(self.temporary_path, 'lat.tif')
@@ -179,28 +179,28 @@ class S3_L2_LST():
         imagePath = os.path.join(self.temporary_path, 'image.tif')
         imageVRTPath = os.path.join(self.temporary_path, 'image.vrt')
 
-        # Создаем растр для широт (..\TEMP\lat.tif):
+        # Creating a raster for latitudes (..\TEMP\lat. tif):
         dataset = driver.Create(latPath, div.shape[1], div.shape[0], 1, dataType)
         dataset.GetRasterBand(1).WriteArray(lats)
 
-        # Создаем растр для долгот (..\TEMP\lon.tif):
+        # Creating a raster for longitudes (..\TEMP\lon. tif)
         dataset = driver.Create(lonPath, div.shape[1], div.shape[0], 1, dataType)
         dataset.GetRasterBand(1).WriteArray(lons)
 
-        # Создаем растр для данных (..\TEMP\image.tif)
+        # Creating a raster for data (..\TEMP\image.tif)
         dataset = driver.Create(imagePath, div.shape[1], div.shape[0], 1, dataType)
         dataset.GetRasterBand(1).WriteArray(div)
 
-        # Установим СК WGS84
+        # Install the WGS84 CS
         gcp_srs = osr.SpatialReference()
         gcp_srs.ImportFromEPSG(4326)
         proj4 = gcp_srs.ExportToProj4()
 
-        # На основе tif-а создадим vrt (..\TEMP\image.vrt)
+        # Based on the tif, we will create a vrt (..\TEMP\image. vrt)
         vrt = gdal.BuildVRT(imageVRTPath, dataset, separate = True, resampleAlg = 'cubic', outputSRS = proj4)
         band = vrt.GetRasterBand(1)
 
-        # Привяжем координаты к виртуальному растру...
+        # Bind the coordinates to the virtual raster...
         metadataGeoloc = {
             'X_DATASET': lonPath,
             'X_BAND': '1',
@@ -212,7 +212,7 @@ class S3_L2_LST():
             'LINE_STEP': '1'
         }
 
-        # ...записав это все в <Metadata domain='Geolocation'>:
+        # ...by writing it all in <Metadata domain= 'Geolocation'>:
         vrt.SetMetadata(metadataGeoloc, "GEOLOCATION")
 
         dataset = None
@@ -225,7 +225,7 @@ class S3_L2_LST():
                                        outputBounds = [self.utm_extent.get('minX'), self.utm_extent.get('minY'), self.utm_extent.get('maxX'), self.utm_extent.get('maxY')],
                                        xRes = self.resolution.get('xRes'), yRes = self.resolution.get('yRes'), creationOptions = ['COMPRESS=LZW'])
 
-        # Закрываем разаархивированные NetCDF файлы
+        # Closing unzipped NetCDF files
         archive.close()
         geodetic_in.close()
         LST_in.close()
@@ -234,9 +234,9 @@ class S3_L2_LST():
         return(warpOptions, imageVRTPath)
     pass
 
-    # Метод для формирования файла .geotiff в нужной директории
-    # save_path --- место, в которое нужно поместить файл с результатом
-    # biomes_instead_lst --- требуется ли получить матрицу типов ландшафтов вместо матрицы LST
+    # Method for generating the file .geotiff in the appropriate directory
+    # save_path --- the location to which you want to place a file with the result
+    # biomes_instead_lst --- do you need to get a landscape type matrix instead of an LST matrix
     def archive_to_geotiff(self, save_path, biomes_instead_lst = False):
         self.biomes_instead_lst = biomes_instead_lst
 
@@ -251,12 +251,12 @@ class S3_L2_LST():
         geotiff_path = os.path.join(save_path, geotiff_name)
         raster = gdal.Warp(geotiff_path, imageVRTPath, dstNodata = self.key_values.get('NoData'), options = warpOptions)
 
-        # Удаляем временную директорию
+        # Deleting the temporary directory
         shutil.rmtree(self.temporary_path, ignore_errors = True)
 
-    # Метод для формирования файла .npy в нужной директории
-    # save_path --- место, в которое нужно поместить файл с результатом
-    # biomes_instead_lst --- требуется ли получить матрицу типов ландшафтов вместо матрицы LST
+    # Method for generating the file .npy in the appropriate directory
+    # save_path --- the location to which you want to place a file with the result
+    # biomes_instead_lst --- do you need to get a landscape type matrix instead of an LST matrix
     def archive_to_npy(self, save_path, biomes_instead_lst = False):
         self.biomes_instead_lst = biomes_instead_lst
 
@@ -268,7 +268,7 @@ class S3_L2_LST():
         geotiff_path = os.path.join(self.temporary_path, geotiff_name)
         raster = gdal.Warp(geotiff_path, imageVRTPath, dstNodata = self.key_values.get('NoData'), options = warpOptions)
 
-        # Сохраняем матрицу в формате .npy
+        # Saving the matrix in .npy format
         if self.biomes_instead_lst == True:
             npy_name = self.datetime + '_biomes.npy'
         else:
@@ -279,11 +279,11 @@ class S3_L2_LST():
         np.save(npy_path, matrix)
 
         raster = None
-        # Удаляем временную директорию
+        # Deleting the temporary directory
         shutil.rmtree(self.temporary_path, ignore_errors = True)
 
-    # Метод для сохранения метаданных в файл JSON
-    # output_path --- место, в которое нужно поместить файл с результатом
+    # Method for saving metadata to a JSON file
+    # output_path --- the location to which you want to place a file with the result
     def save_metadata(self, output_path):
         with open(output_path, 'w') as f:
             f.write(json.dumps(self.metadata))
