@@ -4,6 +4,14 @@ import scipy.spatial
 import random
 
 def reconstruct_geotiff (npy_path, metadata_path, output_path):
+    """
+    Function for converting a matrix from npy format to geotiff
+
+    :param npy_path: path to the file with the npy extension
+    :param metadata_path: path to the file with the geotiff extension
+    :return: generates a geotiff file in the specified folder
+    """
+
     with open(metadata_path, 'r') as fh:
         metadata = json.load(fh)
         
@@ -23,13 +31,17 @@ def reconstruct_geotiff (npy_path, metadata_path, output_path):
     ds.GetRasterBand(1).WriteArray(npy_data)
     del ds
 
-# "Expansion" of the cloud territory using a probabilistic cellular automaton
-# The goal of the algorithm is to identify pixels shaded by the cloud in the image
 def cellular_expand (matrix, biome_matrix, gap = -100.0, iter = 10):
+    """
+    "Expansion" of the cloud territory using a probabilistic cellular automaton
+    The goal of the algorithm is to identify pixels shaded by the cloud in the image
 
-    #############################
-    #     Requires revision     #
-    #############################
+    :param matrix: numpy matrix with land surface temperature
+    :param biome_matrix: matrix which allows us to divide matrix cells into groups
+    :param gap: gap code in the matrix
+    :param iter: number of iterations
+    :return: matrix with extended cloud boundaries marked with a gap code
+    """
 
     # A function that defines all the transformations that must occur with the matrix
     def step(matrix, biome_matrix, gap = gap):
