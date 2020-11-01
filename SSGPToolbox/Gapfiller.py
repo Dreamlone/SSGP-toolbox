@@ -1,6 +1,6 @@
 '''
 
-class SimpleSpatialGapfiller --- a class that allows to fill in gaps in matrices based on machine learning method
+class SimpleSpatialGapfiller --- a class that allows us to fill in gaps in matrices based on machine learning method
 
 Private methods:
 __make_training_sample --- creating a training sample from matrices in the "History" folder
@@ -33,9 +33,13 @@ from sklearn import preprocessing
 from scipy import interpolate
 
 class SimpleSpatialGapfiller():
+    """
+    A class designed to fill in gaps in matrices.
+
+    :param directory: the location of the project folders: "History", "Inputs" and "Extra"
+    """
 
     # When initializing the class, we must specify
-    # directory --- the location of the project folder: "History", "Inputs" and "Extra"
     def __init__(self, directory):
         # Threshold value for not including layers in the training selection when exceeded (changes from 0.0 to 1.0)
         self.main_threshold = 0.05
@@ -54,10 +58,14 @@ class SimpleSpatialGapfiller():
         # Creating a dictionary with data that will be filled in as the algorithm works
         self.metadata = {}
 
-    # The private method generates a training sample from the matrices in the "History" folder
-    # return dictionary --- dictionary where the key (file name) corresponds to the matrix
-    # return keys       --- sorted list of keys, where the last key is the target matrix
     def __make_training_sample(self):
+        """
+        The private method generates a training sample from the matrices in the "History" folder
+
+        :return dictionary: dictionary where the key (file name) corresponds to the matrix
+        :return keys: sorted list of keys, where the last key is the target matrix
+        """
+
         # Creating a dictionary with matrices and a list with keys, where they are stored in strict order
         history_files = os.listdir(self.History_path)
         dictionary = {}
@@ -81,15 +89,19 @@ class SimpleSpatialGapfiller():
         keys.sort()
         return(dictionary, keys)
 
-    # Private method - prepares the dataset, trains the model, and writes the result (as a .npy file) to the specified folder
-    # dictionary              --- dictionary, key - timestamp of image, value - matrix; all layers except the last one are needed for training
-    # keys                    --- list of keys where the last key belongs to the matrix to fill in the gaps in
-    # method                  --- name of the algorithm (Lasso, RandomForest, ExtraTrees, Knn, SVR)
-    # predictor_configuration --- selection of predictors (All, Random, Biome)
-    # hyperparameters         --- the choice of hyperparameters (RandomGridSearch, GridSearch, Custom)
-    # params                  --- if the argument is selected "Custom", then the model parameters are passed via the params argument
-    # add_outputs             --- will the layers filled in by the algorithm be added to the training selection
     def __learning_and_fill(self, dictionary, keys, extra_matrix, method, predictor_configuration, hyperparameters, params, add_outputs):
+        """
+        Method prepares the dataset, trains the model, and writes the result (as a .npy file) to the specified folder
+
+        :param dictionary: dictionary, key - timestamp of image, value - matrix; all layers except the last one are needed for training
+        :param keys: list of keys where the last key belongs to the matrix to fill in the gaps in
+        :param method: name of the algorithm (Lasso, RandomForest, ExtraTrees, Knn, SVR)
+        :param predictor_configuration: selection of predictors (All, Random, Biome)
+        :param hyperparameters: hyperparameters search (RandomGridSearch, GridSearch, Custom)
+        :param params: if the argument is selected "Custom", then the model parameters are passed via the params argument
+        :param add_outputs: will the layers filled in by the algorithm be added to the training sample
+        :return: save filled matrix without gaps in .npy format
+        """
 
         # Lasso
         def Lasso_regression(X_train, y_train, X_test, params):
@@ -584,17 +596,21 @@ class SimpleSpatialGapfiller():
         # Fill in the metadata with the necessary information: how well this algorithm worked on this matrix
         self.metadata.update({npy_name: mean_score})
 
-    # Wrapper over the methods presented above, starts the algorithm for filling in gaps
-    # method - the name of the algorithm (Lasso, RandomForest, ExtraTrees, Knn, SVR)
-    # predictor_configuration - selection of predictors (All, Random, Biome)
-    # hyperparameters - the choice of hyperparameters (RandomGridSearch, GridSearch, Custom)
-    # params - if the "Custom" argument is selected, the model parameters are passed through the params argument
-    # add_outputs - will the layers filled in by the algorithm be added to the training sample
-    # key_values - dictionary with omissions, irrelevant and missing values
-    # In the project folder "Outputs", matrices with filled-in gaps are created in the .npy format
-    # A JSON file with quality metrics for each matrix
+
     def fill_gaps(self, method = 'Lasso', predictor_configuration = 'Random', hyperparameters = 'RandomGridSearch',
                      params = None, add_outputs = False, key_values = {'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}):
+        """
+        Wrapper over the methods presented above, starts the algorithm for filling in gaps
+
+        :param method: the name of the algorithm (Lasso, RandomForest, ExtraTrees, Knn, SVR)
+        :param predictor_configuration: selection of predictors (All, Random, Biome)
+        :param hyperparameters:  hyperparameters search (RandomGridSearch, GridSearch, Custom)
+        :param params: if the "Custom" argument is selected, the model parameters are passed through the params argument
+        :param add_outputs: will the layers filled in by the algorithm be added to the training sample
+        :param key_values: dictionary with omissions, irrelevant and missing values
+        :return: in the project folder "Outputs", matrices with filled-in gaps are created in the .npy format. And a JSON file with quality metrics for each matrix also.
+        """
+
         # Defining flags for gaps, skips and NoData
         self.gap = key_values.get('gap')
         self.skip = key_values.get('skip')
@@ -653,8 +669,13 @@ class SimpleSpatialGapfiller():
         with open(json_path, 'w') as json_file:
             json.dump(self.metadata, json_file)
 
-    # A function that allows to fill in gaps using the nearest neighbor interpolation method
     def nn_interpolation(self, key_values = {'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}):
+        """
+        A method which can fill in gaps using the nearest neighbor interpolation method
+
+        :param key_values: dictionary with omissions, irrelevant and missing values
+        :return: in the project folder "Outputs", matrices with filled-in gaps are created in the .npy format.
+        """
 
         # Defining flags for gaps, skips and NoData
         self.gap = key_values.get('gap')

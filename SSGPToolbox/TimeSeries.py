@@ -20,11 +20,14 @@ import pandas as pd
 from netCDF4 import Dataset
 
 class Discretizator():
+    """
+    A class intended for creating time series and filling in gaps in it
 
-    # When initializing the class, we must specify
-    # directory  --- the directory where the layers to be placed in the time series are located
-    # key_values --- dictionary with omissions and irrelevant values
-    # averaging  --- is it needed to average layers that fall within the same time interval ('None', 'weighted', 'simple')
+    :param directory: the directory where the layers to be placed in the time series are located
+    :param key_values: dictionary with omissions and irrelevant values
+    :param averaging: is it needed to average layers that fall within the same time interval ('None', 'weighted', 'simple')
+    """
+
     def __init__(self, directory, key_values = {'gap': -100.0, 'skip': -200.0}, averaging = 'None'):
         self.directory = directory
         self.averaging = averaging
@@ -54,10 +57,14 @@ class Discretizator():
         # Dictionary with matrices
         self.matrices_dictionary = matrices_dictionary
 
-    # The private method allows to bring data to the specified time step
-    # timestep      --- the time interval after which layers will be placed on the time series grid
-    # return tensor --- a multidimensional matrix in which each layer takes its place on the time series
     def __sampling(self, timestep):
+        """
+        The private method which can bring data to the specified time step
+
+        :param timestep: the time interval after which layers will be placed on the time series grid
+        :return tensor: a multidimensional matrix in which each layer takes its place on the time series
+        """
+
         example_matrix = self.matrices_dictionary.get(self.keys[0])
         rows = example_matrix.shape[0]
         cols = example_matrix.shape[1]
@@ -180,8 +187,16 @@ class Discretizator():
         tensor = np.array(tensor)
         return(tensor, tensor_timesteps)
 
-    # Private method for filling in gaps in a time series
     def __gap_process(self, timeseries, filling_method, n_neighbors = 5):
+        """
+        Private method for filling in gaps in a time series
+
+        :param timeseries: one-dimensional array with gaps
+        :param filling_method: method for filling in gaps ('None', 'median' or 'poly')
+        :param n_neighbors: the neighborhood that will be used for filling approximation functions
+        :return: time series without gaps
+        """
+
         # Indexes of points on the time series to be filled in
         i_gaps = np.argwhere(timeseries == self.gap)
         i_gaps = np.ravel(i_gaps)
@@ -251,8 +266,16 @@ class Discretizator():
 
         return(timeseries)
 
-    # timestep --- the time interval after which layers will be placed on the time series grid
     def make_time_series(self, timestep = '12H', filling_method = 'None'):
+        """
+        A method that generates a time series with a given discreteness and fills in the gaps in it
+
+        :param timestep: the time interval after which layers will be placed on the time series grid
+        :param filling_method: method for filling in gaps ('None', 'median' or 'poly')
+        :return tensor: a multidimensional matrix in which each layer takes its place on the time series
+        :return tensor_timesteps: time indexes for each layer in the tensor
+        """
+
         # From the specified directory and using the selected time step, we form a multidimensional matrix and time steps
         tensor, tensor_timesteps = self.__sampling(timestep = timestep)
 
@@ -280,10 +303,15 @@ class Discretizator():
 
         return(tensor, tensor_timesteps)
 
-
-    # A method that allows to save the results as .npy matrices
-    # save_path --- the folder to which you want to store the result
     def save_npy(self, tensor, tensor_timesteps, save_path):
+        """
+        A method that allows us to save the results as .npy matrices
+
+        :param tensor: a multidimensional matrix in which each layer takes its place on the time series
+        :param tensor_timesteps: time indexes for each layer in the tensor
+        :param save_path: the folder to which you want to store the result
+        """
+
         # Create folder 'Discretisation_output'; if there is, then use the existing one
         if os.path.isdir(save_path) == False:
             os.makedirs(save_path)
@@ -298,10 +326,14 @@ class Discretizator():
             npy_name = os.path.join(save_path, time)
             np.save(npy_name, matrix)
 
-
-    # A method that allows to save the results as a netCDF file
-    # save_path --- the folder to which you want to store the result
     def save_netcdf(self, tensor, tensor_timesteps, save_path):
+        """
+        A method that allows to save the results as a netCDF file
+
+        :param tensor: a multidimensional matrix in which each layer takes its place on the time series
+        :param tensor_timesteps: time indexes for each layer in the tensor
+        :param save_path: the folder to which you want to store the result
+        """
 
         # Create folder 'Discretisation_output'; if there is, then use the existing one
         if os.path.isdir(save_path) == False:
