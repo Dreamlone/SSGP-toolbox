@@ -187,13 +187,15 @@ class Discretizator():
         tensor = np.array(tensor)
         return(tensor, tensor_timesteps)
 
-    def __gap_process(self, timeseries, filling_method, n_neighbors = 5):
+    def __gap_process(self, timeseries, filling_method, n_neighbors, poly_degree):
         """
         Private method for filling in gaps in a time series
 
         :param timeseries: one-dimensional array with gaps
         :param filling_method: method for filling in gaps ('None', 'median' or 'poly')
-        :param n_neighbors: the neighborhood that will be used for filling approximation functions
+        :param n_neighbors: the neighborhood that will be used for filling with approximation functions
+        (ignore if filling_method = None)
+        :param poly_degree: degree of a polynomial function (ignore if filling_method != 'poly')
         :return: time series without gaps
         """
 
@@ -258,7 +260,7 @@ class Discretizator():
                 nearest_indices = np.array(nearest_indices)
 
                 # Local approximation by an n-th degree polynomial
-                local_coefs = np.polyfit(nearest_indices, nearest_values, 2)
+                local_coefs = np.polyfit(nearest_indices, nearest_values, poly_degree)
 
                 # We estimate our point according to the selected coefficients
                 est_value = np.polyval(local_coefs, gap_index)
@@ -266,12 +268,15 @@ class Discretizator():
 
         return(timeseries)
 
-    def make_time_series(self, timestep = '12H', filling_method = 'None'):
+    def make_time_series(self, timestep = '12H', filling_method = 'None', n_neighbors = 5, poly_degree = 2):
         """
         A method that generates a time series with a given discreteness and fills in the gaps in it
 
         :param timestep: the time interval after which layers will be placed on the time series grid
         :param filling_method: method for filling in gaps ('None', 'median' or 'poly')
+        :param n_neighbors: the neighborhood that will be used for filling with approximation functions
+        (ignore if filling_method = None)
+        :param poly_degree: degree of a polynomial function (ignore if filling_method != 'poly')
         :return tensor: a multidimensional matrix in which each layer takes its place on the time series
         :return tensor_timesteps: time indexes for each layer in the tensor
         """
@@ -292,7 +297,8 @@ class Discretizator():
                 # If there is at least one gap in the time series, it must be filled in
                 elif any(value == self.gap for value in pixel_timeseries):
                     # Using the private __gap_process method, we fill in the time series gap
-                    pixel_timeseries = self.__gap_process(timeseries = pixel_timeseries, filling_method = filling_method)
+                    pixel_timeseries = self.__gap_process(timeseries = pixel_timeseries, filling_method = filling_method,
+                                                          n_neighbors = n_neighbors, poly_degree = poly_degree)
 
                 # If there are no gaps in the row, then you don't need to fill in anything
                 else:
