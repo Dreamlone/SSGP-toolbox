@@ -46,6 +46,12 @@ All documentation and examples for now are described in Markdown files and Jupyt
 If you want to compare the accuracy of your algorithm with ours, you can use the dataset we have prepared. You can find it in the "Comparison" folder. The dataset already contains the layers filled in by our model, as well as the ["CRAN gapfill"](https://cran.r-project.org/web/packages/gapfill/index.html) and ["gapfilling rasters"](https://github.com/HughSt/gapfilling_rasters) layers.
 - [Detailed description of the data](https://github.com/Dreamlone/SSGP-toolbox/tree/master/Comparison/Description.md)
 
+## Citation
+Sarafanov, M.; Kazakov, E.; Nikitin, N.O.; Kalyuzhnaya, A.V. 
+[A Machine Learning Approach for Remote Sensing Data Gap-Filling 
+with Open-Source Implementation: An Example Regarding Land Surface 
+Temperature, Surface Albedo and NDVI](https://www.mdpi.com/2072-4292/12/23/3865). Remote Sens. 2020, 12, 3865.
+
 ## Contacts
 
 Feel free to contact us:
@@ -53,8 +59,5 @@ Feel free to contact us:
 Mikhail Sarafanov (maintainer) | mik_sar@mail.ru
 
 Eduard Kazakov | ee.kazakov@gmail.com
-
-
-
 
 
