@@ -3,7 +3,7 @@
 
 SimpleSpatialGapfiller - python class for filling gaps in matrices based on machine learing techniques. Main purpose is to provide convenient and simple instruments for modeling geophysical parameters, derived with Earth Remote Sensing, under clouds. But it also could be used for any matrices.
 
-## Algorithm paper
+## Reference
 
 [Sarafanov, M.; Kazakov, E.; Nikitin, N.O.; Kalyuzhnaya, A.V. A Machine Learning Approach for Remote Sensing Data Gap-Filling with Open-Source Implementation: An Example Regarding Land Surface Temperature, Surface Albedo and NDVI. Remote Sens. 2020, 12, 3865.](https://www.mdpi.com/2072-4292/12/23/3865)
 
