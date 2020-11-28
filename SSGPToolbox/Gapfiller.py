@@ -1,15 +1,21 @@
-'''
+"""
 
-class SimpleSpatialGapfiller --- a class that allows us to fill in gaps in matrices based on machine learning method
+class SimpleSpatialGapfiller --- a class that allows us to fill in gaps in
+matrices based on machine learning method
 
 Private methods:
-__make_training_sample --- creating a training sample from matrices in the "History" folder
-__learning_and_fill    --- filling in gaps for the matrix, writing the result to the "Outputs" folder
+__make_training_sample --- creating a training sample from matrices in the
+"History" folder
+__learning_and_fill    --- filling in gaps for the matrix, writing the result to
+the "Outputs" folder
 
 Public methods:
-fill_gaps        --- using the __learning_and_fill method for each of the matrices in the "Inputs" folder, creating a file with metadata about the quality of the algorithm
-nn_interpolation --- using the nearest neighbor interpolation for each of the matrices in the "Inputs" folder
-'''
+fill_gaps        --- using the __learning_and_fill method for each of the
+matrices in the "Inputs" folder, creating a file with metadata about the quality
+of the algorithm
+nn_interpolation --- using the nearest neighbor interpolation for each of the
+matrices in the "Inputs" folder
+"""
 
 import os
 import random
@@ -32,79 +38,92 @@ from sklearn.model_selection import KFold, cross_val_score
 from sklearn import preprocessing
 from scipy import interpolate
 
+
 class SimpleSpatialGapfiller():
     """
     A class designed to fill in gaps in matrices.
 
-    :param directory: the location of the project folders: "History", "Inputs" and "Extra"
+    :param directory: the location of the project folders: "History", "Inputs"
+    and "Extra"
     """
 
     # When initializing the class, we must specify
     def __init__(self, directory):
-        # Threshold value for not including layers in the training selection when exceeded (changes from 0.0 to 1.0)
+        # Threshold value for not including layers in the training selection
+        # when exceeded (changes from 0.0 to 1.0)
         self.main_threshold = 0.05
         self.directory = directory
 
         # Creating the 'Outputs' folder; if there is, use the existing one
-        self.Outputs_path = os.path.join(self.directory, 'Outputs')
-        if os.path.isdir(self.Outputs_path) == False:
-            os.makedirs(self.Outputs_path)
+        self.outputs_path = os.path.join(self.directory, 'Outputs')
+        if os.path.isdir(self.outputs_path) == False:
+            os.makedirs(self.outputs_path)
 
         # Access to all remaining folders in the project
-        self.Inputs_path = os.path.join(self.directory, 'Inputs')
-        self.Extra_path = os.path.join(self.directory, 'Extra')
-        self.History_path = os.path.join(self.directory, 'History')
+        self.inputs_path = os.path.join(self.directory, 'Inputs')
+        self.extra_path = os.path.join(self.directory, 'Extra')
+        self.history_path = os.path.join(self.directory, 'History')
 
-        # Creating a dictionary with data that will be filled in as the algorithm works
+        # Creating a dictionary with data that will be filled in as the
+        # algorithm works
         self.metadata = {}
 
     def __make_training_sample(self):
         """
-        The private method generates a training sample from the matrices in the "History" folder
+        The private method generates a training sample from the matrices in the
+        "History" folder
 
-        :return dictionary: dictionary where the key (file name) corresponds to the matrix
-        :return keys: sorted list of keys, where the last key is the target matrix
+        :return : a multidimensional array of dimension [x, i, j], where x
+        is the number of matrices in the training sample
         """
 
-        # Creating a dictionary with matrices and a list with keys, where they are stored in strict order
-        history_files = os.listdir(self.History_path)
-        dictionary = {}
-        keys = []
+        history_files = os.listdir(self.history_path)
+        history_files.sort()
+
+        train_tensor = []
         for file in history_files:
-            key_path = os.path.join(self.History_path, file) # Path to a specific matrix in the training sample
-            key = file[:-4] # Key for the matrix
+            # Path to a specific matrix in the training sample
+            key_path = os.path.join(self.history_path, file)
             matrix = np.load(key_path)
 
-            # If there is more than a main_threshold percentage of pixels that were not taken at this time, the matrix is not included in the analysis
+            # If there is more than a main_threshold percentage of pixels
+            # that were not taken at this time, the matrix is not included
+            # in the analysis
             amount_na = (matrix == self.nodata).sum()
             shape = matrix.shape
             threshold = amount_na/(shape[0]*shape[1])
             if threshold > self.main_threshold:
                 pass
             else:
-                keys.append(key)
-                dictionary.update({key: matrix})
+                train_tensor.append(matrix)
 
-        # Sorting the list with keys
-        keys.sort()
-        return(dictionary, keys)
+        return(train_tensor)
 
-    def __learning_and_fill(self, dictionary, keys, extra_matrix, method, predictor_configuration, hyperparameters, params, add_outputs):
+    def __learning_and_fill(self, train_tensor, final_matrix, key,
+                            extra_matrix, method, predictor_configuration,
+                            hyperparameters, params, add_outputs):
         """
-        Method prepares the dataset, trains the model, and writes the result (as a .npy file) to the specified folder
+        Method prepares the dataset, trains the model, and writes the result
+        (as a .npy file) to the specified folder
 
-        :param dictionary: dictionary, key - timestamp of image, value - matrix; all layers except the last one are needed for training
-        :param keys: list of keys where the last key belongs to the matrix to fill in the gaps in
-        :param method: name of the algorithm (Lasso, RandomForest, ExtraTrees, Knn, SVR)
+        :param train_tensor: a multidimensional array of dimension [x, i, j],
+        where x is the number of matrices in the training sample
+        :param final_matrix: matrix with gaps to fill in
+        :param key: name of the matrix with gaps that is currently being processed
+        :param method: name of the algorithm (Lasso, RandomForest, ExtraTrees,
+        Knn, SVR)
         :param predictor_configuration: selection of predictors (All, Random, Biome)
-        :param hyperparameters: hyperparameters search (RandomGridSearch, GridSearch, Custom)
-        :param params: if the argument is selected "Custom", then the model parameters are passed via the params argument
-        :param add_outputs: will the layers filled in by the algorithm be added to the training sample
+        :param hyperparameters: hyperparameters search (RandomGridSearch,
+        GridSearch, Custom)
+        :param params: if the argument is selected "Custom", then the model
+        parameters are passed via the params argument
+        :param add_outputs: will the layers filled in by the algorithm be added
+        to the training sample
         :return: save filled matrix without gaps in .npy format
         """
 
         # Lasso
-        def Lasso_regression(X_train, y_train, X_test, params):
+        def lasso_regression(X_train, y_train, X_test, params):
             # Grid search for Lasso due to the small number of hyperparameters 'GridSearch' and 'RandomGridSearch' are the same
             if hyperparameters == 'RandomGridSearch' or hyperparameters == 'GridSearch':
                 # We search the grid with cross-validation (the number of folds is 3)
@@ -133,7 +152,7 @@ class SimpleSpatialGapfiller():
             return(predicted, validation_score)
 
         # Random forest
-        def Random_forest_regression(X_train, y_train, X_test, params):
+        def random_forest_regression(X_train, y_train, X_test, params):
             # Random grid search
             if hyperparameters == 'RandomGridSearch':
                 # Carry out a random grid search with cross-validation (the number of folds is 3)
@@ -175,7 +194,7 @@ class SimpleSpatialGapfiller():
             return(predicted, validation_score)
 
         # Extra trees
-        def Extra_trees_regression(X_train, y_train, X_test, params):
+        def extra_trees_regression(X_train, y_train, X_test, params):
             # Random grid search
             if hyperparameters == 'RandomGridSearch':
                 # Carry out a random grid search with cross-validation (the number of folds is 3)
@@ -212,24 +231,31 @@ class SimpleSpatialGapfiller():
 
                 # Cross-validation
                 fold = KFold(n_splits = 3, shuffle = True)
-                validation_score = cross_val_score(estimator = estimator, X = X_train, y = y_train, cv = fold, scoring = 'neg_mean_absolute_error')
+                validation_score = cross_val_score(estimator = estimator,
+                                                   X = X_train, y = y_train,
+                                                   cv = fold, scoring = 'neg_mean_absolute_error')
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
             return(predicted, validation_score)
 
         # К-nearest neighbors
-        def KNN_regression(X_train, y_train, X_test, params):
+        def knn_regression(X_train, y_train, X_test, params):
             # Random grid search
             if hyperparameters == 'RandomGridSearch':
                 # Carry out a random grid search with cross-validation (the number of folds is 3)
                 weights = ['uniform', 'distance']
                 algorithm = ['auto', 'kd_tree']
                 n_neighbors = [2, 5,10,15,20]
-                param_grid = {'weights': weights, 'n_neighbors': n_neighbors, 'algorithm': algorithm}
+                param_grid = {'weights': weights,
+                              'n_neighbors': n_neighbors,
+                              'algorithm': algorithm}
                 # Set the model to be trained
                 estimator = KNeighborsRegressor()
                 # Train the model with the given options of parameters
-                optimizer = RandomizedSearchCV(estimator, param_grid, n_iter = 5, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
+                optimizer = RandomizedSearchCV(estimator, param_grid,
+                                               n_iter = 5, cv = 3,
+                                               iid = 'deprecated',
+                                               scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, y_train)
                 regression = optimizer.best_estimator_
                 predicted = regression.predict(X_test)
@@ -239,11 +265,15 @@ class SimpleSpatialGapfiller():
                 weights = ['uniform', 'distance']
                 algorithm = ['auto', 'kd_tree']
                 n_neighbors = [2, 5, 10, 15, 20]
-                param_grid = {'weights': weights, 'n_neighbors': n_neighbors, 'algorithm': algorithm}
+                param_grid = {'weights': weights,
+                              'n_neighbors': n_neighbors,
+                              'algorithm': algorithm}
                 # Set the model to be trained
                 estimator = KNeighborsRegressor()
                 # Train the model with the given options of parameters
-                optimizer = GridSearchCV(estimator, param_grid, cv = 3, iid='deprecated', scoring='neg_mean_absolute_error')
+                optimizer = GridSearchCV(estimator, param_grid,
+                                         cv = 3, iid='deprecated',
+                                         scoring='neg_mean_absolute_error')
                 optimizer.fit(X_train, y_train)
                 regression = optimizer.best_estimator_
                 predicted = regression.predict(X_test)
@@ -255,13 +285,15 @@ class SimpleSpatialGapfiller():
 
                 # Cross-validation
                 fold = KFold(n_splits = 3, shuffle = True)
-                validation_score = cross_val_score(estimator = estimator, X = X_train, y = y_train, cv = fold, scoring = 'neg_mean_absolute_error')
+                validation_score = cross_val_score(estimator = estimator,
+                                                   X = X_train, y = y_train,
+                                                   cv = fold, scoring = 'neg_mean_absolute_error')
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
             return(predicted, validation_score)
 
         # Support Vector Machine
-        def SVM_regression(X_train, y_train, X_test, params):
+        def svm_regression(X_train, y_train, X_test, params):
             # Combine our sample for the standardization procedure
             sample = np.vstack((X_train, X_test))
 
@@ -279,7 +311,9 @@ class SimpleSpatialGapfiller():
                 # Set the model to be trained
                 estimator = SVR(kernel = 'linear', gamma = 'scale')
                 # Train the model with the given options of parameters
-                optimizer = RandomizedSearchCV(estimator, param_grid, n_iter = 5, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
+                optimizer = RandomizedSearchCV(estimator, param_grid, n_iter = 5,
+                                               cv = 3, iid = 'deprecated',
+                                               scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
                 regression = optimizer.best_estimator_
                 predicted = regression.predict(X_test)
@@ -292,7 +326,9 @@ class SimpleSpatialGapfiller():
                 # Set the model to be trained
                 estimator = SVR(kernel = 'linear', gamma = 'scale')
                 # Train the model with the given options of parameters
-                optimizer = GridSearchCV(estimator, param_grid, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
+                optimizer = GridSearchCV(estimator, param_grid, cv = 3,
+                                         iid = 'deprecated',
+                                         scoring = 'neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
                 regression = optimizer.best_estimator_
                 predicted = regression.predict(X_test)
@@ -304,34 +340,34 @@ class SimpleSpatialGapfiller():
 
                 # Cross-validation
                 fold = KFold(n_splits = 3, shuffle = True)
-                validation_score = cross_val_score(estimator = estimator, X = X_train, y = np.ravel(y_train), cv = fold, scoring = 'neg_mean_absolute_error')
+                validation_score = cross_val_score(estimator = estimator,
+                                                   X = X_train, y = np.ravel(y_train),
+                                                   cv = fold, scoring = 'neg_mean_absolute_error')
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
 
             return(predicted, validation_score)
 
-        def all_points(coord_row, coord_column, final_matrix):
+        def all_points(coord_row, coord_column, final_matrix, tensor):
             # The indices of all points that are not covered by clouds (including pixels with a value skip, nodata)
             coords = np.argwhere(final_matrix != self.gap)
             coords = list(coords)
             coords.append([coord_row, coord_column])
             coords = np.array(coords)
 
-            # For each matrix from the dictionary by known coordinates (indexes), we remove the parameter
-            # values and write them to the dataset
-            # The last row in the dataset is the values for the matrix to be filled in
-            dataframe = []
-            for key in keys:
-                matrix = dictionary.get(key)
-                values = []
-                for i, j in coords:
-                    values.append(matrix[i, j])
-                values = np.array(values)
-                dataframe.append(values)
+            # Creating a blank for the future dataframe
+            dataframe = np.full((len(tensor) + 1, len(coords)), 0.0)
+            for col_index in range(len(coords)):
+                i, j = coords[col_index]
+
+                # Adding a predictor (pixel with indexes i,j) to the table
+                dataframe[:-1, col_index] = tensor[:, i, j]
+                # Entering the data of this pixel for the target matrix
+                dataframe[-1, col_index] = final_matrix[i, j]
             dataframe = pd.DataFrame(dataframe)
             return (dataframe)
 
-        def random_points(coord_row, coord_column, final_matrix):
+        def random_points(coord_row, coord_column, final_matrix, tensor):
             # Make a random selection of points
             shape = final_matrix.shape
             n_strings = shape[0]
@@ -357,29 +393,30 @@ class SimpleSpatialGapfiller():
                     coords.append(coordinates)
                     number_iter += 1
 
-            # Adding the coordinates of the point for which reference points are selected (it always takes the last place in the dataset)
+            # Adding the coordinates of the point for which reference points
+            # are selected (it always takes the last place in the dataset)
             coords.append([coord_row, coord_column])
             coords = np.array(coords)
 
-            # For each matrix from the dictionary by known coordinates (indexes), we remove the parameter
-            # values and write them to the dataset
-            # The last row in the dataset is the values for the matrix to be filled in
-            dataframe = []
-            for key in keys:
-                matrix = dictionary.get(key)
-                values = []
-                for i, j in coords:
-                    values.append(matrix[i, j])
-                values = np.array(values)
-                dataframe.append(values)
+            # Creating a blank for the future dataframe
+            dataframe = np.full((len(tensor) + 1, len(coords)), 0.0)
+            for col_index in range(len(coords)):
+                i, j = coords[col_index]
+
+                # Adding a predictor (pixel with indexes i,j) to the table
+                dataframe[:-1, col_index] = tensor[:, i, j]
+                # Entering the data of this pixel for the target matrix
+                dataframe[-1, col_index] = final_matrix[i, j]
             dataframe = pd.DataFrame(dataframe)
             return (dataframe)
 
-        def biome_points(coord_row, coord_column, final_matrix, extra_matrix):
+        def biome_points(coord_row, coord_column, final_matrix, tensor, extra_matrix):
             # Index of the row and column for the pixel to be filled in
-            extra_code = extra_matrix[coord_row, coord_column]  # Code of the biome (group of pixels) for the pixel we want to find out
+            # Code of the biome (group of pixels) for the pixel we want to find out
+            extra_code = extra_matrix[coord_row, coord_column]
 
-            # An important moment is that we assign all pixel values in the copy of the biome matrix, if they are covered by the cloud, the value gap
+            # An important moment is that we assign all pixel values in the copy
+            # of the biome matrix, if they are covered by the cloud, the value gap
             new_extra_matrix = np.copy(extra_matrix)
             new_extra_matrix[final_matrix == self.gap] = self.gap
 
@@ -388,7 +425,8 @@ class SimpleSpatialGapfiller():
             if len(coords) > 41:
                 ''' The biome is suitable as a cluster '''
 
-                # Рассчет расстояния целевого пикселя от тех, которые были выбраны в качестве предикторов (по индексам)
+                # The calculation of the distance of the target pixel from those
+                # that were selected as predictors (index)
                 target_pixel = np.array([[coord_row, coord_column]])
                 # Vector of calculated distances from the target pixel to all other pixels
                 distances = scipy.spatial.distance.cdist(target_pixel, coords)[0]
@@ -450,32 +488,31 @@ class SimpleSpatialGapfiller():
                     new_coord = coords[index_min_dist]
                     new_coords.append(new_coord)
 
-                    # Replacing the minimum element from the array with a very large number
+                    # Replacing the minimum element from the array with a very
+                    # large number
                     distances[index_min_dist] = np.inf
 
-                # Adding the coordinates of the point for which reference points are selected (it always takes the last place in the dataset)
+                # Adding the coordinates of the point for which reference points
+                # are selected (it always takes the last place in the dataset)
                 coords = list(new_coords)
                 coords.append([coord_row, coord_column])
                 coords = np.array(coords)
 
-            # For each matrix from the dictionary by known coordinates (indexes), we remove the parameter
-            # values and write them to the dataset
-            # The last row in the dataset is the values for the matrix to be filled in
-            dataframe = []
-            for key in keys:
-                matrix = dictionary.get(key)
-                values = []
-                for i, j in coords:
-                    values.append(matrix[i, j])
-                values = np.array(values)
-                dataframe.append(values)
+            # Creating a blank for the future dataframe
+            dataframe = np.full((len(tensor)+1, len(coords)), 0.0)
+            for col_index in range(len(coords)):
+                i,j = coords[col_index]
+
+                # Adding a predictor (pixel with indexes i,j) to the table
+                dataframe[:-1, col_index] = tensor[:, i, j]
+                # Entering the data of this pixel for the target matrix
+                dataframe[-1, col_index] = final_matrix[i,j]
             dataframe = pd.DataFrame(dataframe)
             return(dataframe)
 
-        final_matrix = dictionary.get(keys[-1]) # The matrix to fill in
         # Mark the indexes of points that need to be filled in
         gaps = np.argwhere(final_matrix == self.gap)
-        print('Number of gap pixels -', len(gaps))
+        print(f'Number of gap pixels - {len(gaps)}')
 
         # Make a copy of the matrix - we will write the values to it after applying the algorithm
         filled_matrix = np.copy(final_matrix)
@@ -489,20 +526,28 @@ class SimpleSpatialGapfiller():
 
             # Creating a dataset for model training
             if predictor_configuration == 'Biome':
-                dataframe = biome_points(coord_row, coord_column, final_matrix = final_matrix, extra_matrix = extra_matrix)
+                dataframe = biome_points(coord_row, coord_column,
+                                         final_matrix = final_matrix,
+                                         tensor = train_tensor,
+                                         extra_matrix = extra_matrix)
             elif predictor_configuration == 'All':
-                dataframe = all_points(coord_row, coord_column, final_matrix = final_matrix)
-            # If the method is not set, a random selection of predictors is used by default
-            else:
-                dataframe = random_points(coord_row, coord_column, final_matrix = final_matrix)
+                dataframe = all_points(coord_row, coord_column,
+                                       final_matrix = final_matrix,
+                                       tensor = train_tensor)
+            elif predictor_configuration == 'Random':
+                dataframe = random_points(coord_row, coord_column,
+                                          final_matrix = final_matrix,
+                                          tensor = train_tensor)
 
-            # Preparing data for the dataset
-            # If there is at least one skip value in the rightmost column, this pixel will not be affected by the algorithm
+            # Preparing data
+            # If there is at least one skip value in the rightmost column,
+            # this pixel will not be affected by the algorithm
             # The skip value is automatically assigned
             if any(value == self.skip for value in np.array(dataframe)[:,-1]):
                 predicted = self.skip
             else:
-                # We must delete those columns that have at least one skip value (those values that do not need to be filled in)
+                # We must delete those columns that have at least one skip value
+                # (those values that do not need to be filled in)
                 dataframe.replace(self.skip, np.nan, inplace=True)
                 dataframe.dropna(axis = 'columns', inplace = True)
 
@@ -517,17 +562,24 @@ class SimpleSpatialGapfiller():
                 dataframe.replace(self.nodata, np.nan, inplace = True)
                 dataframe.replace(self.gap, np.nan, inplace = True)
 
-                dataframe = dataframe.dropna(how = 'all')  # We delete those lines where we have omissions for all signs (the cloud has closed the entire territory)
+                # We delete those lines where we have omissions for all signs
+                # (the cloud has closed the entire territory)
+                dataframe = dataframe.dropna(how = 'all')
 
-                last_string = np.array(dataframe.iloc[-1:, :-1])  # Take the last row from the dataset (except for the last element in it)
+                # Take the last row from the dataset (except for the last
+                # element in it)
+                last_string = np.array(dataframe.iloc[-1:, :-1])
                 last_string = np.ravel(last_string)
-                last_string_na = np.ravel(np.isnan(last_string))  # Setting True where there are gaps
-                indexes_na = np.ravel(np.argwhere(last_string_na == True))  # Get a list of column indexes that have gaps in the last row
+                # Setting True where there are gaps
+                last_string_na = np.ravel(np.isnan(last_string))
+                # Get a list of column indexes that have gaps in the last row
+                indexes_na = np.ravel(np.argwhere(last_string_na == True))
                 indexes_na_str = []
                 for i in indexes_na:
                     indexes_na_str.append(str(i))
 
-                # If there are gaps in the last row of the dataset, then delete the columns with gaps
+                # If there are gaps in the last row of the dataset, then
+                # delete the columns with gaps
                 if len(indexes_na_str) > 0:
                     for i in indexes_na_str:
                         dataframe.drop([i], axis = 1, inplace = True)
@@ -542,19 +594,24 @@ class SimpleSpatialGapfiller():
 
                 # Fill in the dataframe with the median value for the column
                 def col_median(index):
-                    sample = np.array(dataframe[index].dropna()) # Looking for the median value by column
+                    # Looking for the median value by column
+                    sample = np.array(dataframe[index].dropna())
                     median = np.median(sample)
                     return(median)
 
-                for i in range(0,len(dataframe.columns)-1): # The last column contains the target, so we don't touch the gaps in it yet
+                # The last column contains the target, so we don't touch the
+                # gaps in it yet
+                for i in range(0,len(dataframe.columns)-1):
                     i = str(i)
                     dataframe[i].fillna(col_median(i), inplace = True)
 
-                # Divide the dataframe into a training sample and an object to predict the value for
+                # Divide the dataframe into a training sample and an object to
+                # predict the value for
                 train = dataframe.iloc[:-1, :]
                 test = dataframe.iloc[-1:, :]
 
-                # We exclude all objects with omission in the target function from the training sample
+                # We exclude all objects with omission in the target function
+                # from the training sample
                 train = train.dropna()
 
                 X_train = np.array(train.iloc[:, :-1])
@@ -564,51 +621,77 @@ class SimpleSpatialGapfiller():
 
                 # Depending on the selected option, the corresponding method is enabled
                 if method == 'RandomForest':
-                    predicted, score = Random_forest_regression(X_train, np.ravel(y_train), X_test, params = params)
+                    predicted, score = random_forest_regression(X_train,
+                                                                np.ravel(y_train),
+                                                                X_test,
+                                                                params = params)
                 elif method == 'ExtraTrees':
-                    predicted, score = Extra_trees_regression(X_train, np.ravel(y_train), X_test, params = params)
+                    predicted, score = extra_trees_regression(X_train,
+                                                              np.ravel(y_train),
+                                                              X_test,
+                                                              params = params)
                 elif method == 'Knn':
-                    predicted, score = KNN_regression(X_train, y_train, X_test, params = params)
+                    predicted, score = knn_regression(X_train,
+                                                      y_train,
+                                                      X_test,
+                                                      params = params)
                 elif method == 'SVR':
-                    predicted, score = SVM_regression(X_train, y_train, X_test, params = params)
-                # If the method is not set, the Lasso-regression is used by default
-                else:
-                    predicted, score = Lasso_regression(X_train, y_train, X_test, params = params)
+                    predicted, score = svm_regression(X_train,
+                                                      y_train,
+                                                      X_test,
+                                                      params = params)
+                elif method == 'Lasso':
+                    predicted, score = lasso_regression(X_train,
+                                                        y_train,
+                                                        X_test,
+                                                        params = params)
 
-                # The value of the error in the test during cross-validation is recorded in a separate array
+                # The value of the error in the test during cross-validation is
+                # recorded in a separate array
                 scores.append(abs(score))
 
             # Write the value predicted by the algorithm to the matrix
             filled_matrix[coord_row, coord_column] = predicted
 
-        npy_name = str(keys[-1]) + '.npy'
-        filled_matrix_npy = os.path.join(self.Outputs_path, npy_name)
+        npy_name = ''.join((key,'.npy'))
+        filled_matrix_npy = os.path.join(self.outputs_path, npy_name)
         np.save(filled_matrix_npy, filled_matrix)
-        # If the "add_outputs" parameter is set to True, the layer filled in by the model is included in the training selection
+        # If the "add_outputs" parameter is set to True, the layer filled in
+        # by the model is included in the training selection
         if add_outputs == True:
-            filled_matrix_history_npy = os.path.join(self.History_path, npy_name)
+            filled_matrix_history_npy = os.path.join(self.history_path, npy_name)
             np.save(filled_matrix_history_npy, filled_matrix)
 
         # Now let's look at the errors received from cross-validation
         scores = np.array(scores)
         mean_score = np.mean(scores)
-        print('Mean absolute error for cross-validation -', mean_score)
-        # Fill in the metadata with the necessary information: how well this algorithm worked on this matrix
+        print(f'Mean absolute error for cross-validation - {mean_score}')
+        # Fill in the metadata with the necessary information: how well this
+        # algorithm worked on this matrix
         self.metadata.update({npy_name: mean_score})
 
 
-    def fill_gaps(self, method = 'Lasso', predictor_configuration = 'Random', hyperparameters = 'RandomGridSearch',
-                     params = None, add_outputs = False, key_values = {'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}):
+    def fill_gaps(self, method = 'Lasso',
+                  predictor_configuration = 'Random',
+                  hyperparameters = 'RandomGridSearch',
+                  params = None, add_outputs = False,
+                  key_values = {'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}):
         """
-        Wrapper over the methods presented above, starts the algorithm for filling in gaps
+        Wrapper over the methods presented above, starts the algorithm for
+        filling in gaps
 
-        :param method: the name of the algorithm (Lasso, RandomForest, ExtraTrees, Knn, SVR)
+        :param method: the name of the algorithm (Lasso, RandomForest,
+        ExtraTrees, Knn, SVR)
         :param predictor_configuration: selection of predictors (All, Random, Biome)
-        :param hyperparameters:  hyperparameters search (RandomGridSearch, GridSearch, Custom)
-        :param params: if the "Custom" argument is selected, the model parameters are passed through the params argument
-        :param add_outputs: will the layers filled in by the algorithm be added to the training sample
+        :param hyperparameters:  hyperparameters search (RandomGridSearch,
+        GridSearch, Custom)
+        :param params: if the "Custom" argument is selected, the model
+        parameters are passed through the params argument
+        :param add_outputs: will the layers filled in by the algorithm be added
+        to the training sample
         :param key_values: dictionary with omissions, irrelevant and missing values
-        :return: in the project folder "Outputs", matrices with filled-in gaps are created in the .npy format. And a JSON file with quality metrics for each matrix also.
+        :return: in the project folder "Outputs", matrices with filled-in gaps
+        are created in the .npy format. And a JSON file with quality metrics for each matrix also.
         """
 
         # Defining flags for gaps, skips and NoData
@@ -618,63 +701,75 @@ class SimpleSpatialGapfiller():
 
         if predictor_configuration == 'Biome':
             # We get a matrix for dividing pixels into groups
-            Extra_file = os.path.join(self.Extra_path, 'Extra.npy')
-            extra_matrix = np.load(Extra_file)
+            extra_file = os.path.join(self.extra_path, 'Extra.npy')
+            extra_matrix = np.load(extra_file)
         else:
             extra_matrix = None
 
         # Files where we need to fill in the gaps
-        inputs_files = os.listdir(self.Inputs_path)
+        inputs_files = os.listdir(self.inputs_path)
         inputs_files.sort()
         for input in inputs_files:
             start = timeit.default_timer()
-            # We apply the method to reduce matrices to an associative array, and since the dictionary is unordered, we write the keys in strict order in the keys list
-            dictionary, keys = self.__make_training_sample() # So far, the dictionary only contains matrices from the training sample
 
-            input_path = os.path.join(self.Inputs_path, input)  # Path to the concrete matrix in the "Inputs" folder
-            key = input[:-4]  # Key for the matrix
+            # Merging matrices from the "History" folder into an array
+            train_tensor = self.__make_training_sample()
+            train_tensor = np.array(train_tensor)
+
+            # Path to the particular matrix in the "Inputs" folder
+            input_path = os.path.join(self.inputs_path, input)
+            # Key for the matrix
+            key = input[:-4]
             matrix = np.load(input_path)
 
-            # If we have less than 101 unclosed pixels on the scene, the calculation is not performed
+            # If we have less than 101 unclosed pixels on the scene,
+            # the calculation is not performed
             shape = matrix.shape
             all_pixels = shape[0] * shape[1]
             if all_pixels - ((matrix == self.gap).sum() + (matrix == self.skip).sum() + (matrix == self.nodata).sum()) <= 101:
-                print('No calculation for matrix', key)
+                print(f'No calculation for matrix {key}')
             # If there are no gaps in the image, it is saved as filled in without using the algorithm
             elif (matrix == self.gap).sum() == 0:
-                print('No gaps in matrix', key)
+                print(f'No gaps in matrix {key}')
                 npy_name = str(key) + '.npy'
-                filled_matrix_npy = os.path.join(self.Outputs_path, npy_name)
+                filled_matrix_npy = os.path.join(self.outputs_path, npy_name)
                 np.save(filled_matrix_npy, matrix)
 
                 if add_outputs == True:
-                    filled_matrix_npy = os.path.join(self.History_path, npy_name)
+                    filled_matrix_npy = os.path.join(self.history_path, npy_name)
                     np.save(filled_matrix_npy, matrix)
                 # Filling in the dictionary with metadata
                 self.metadata.update({npy_name: 0.0})
             else:
-                print('Calculations for matrix', key)
-                # Now there is a matrix in the array for which you need to fill in the gaps
-                keys.append(key)
-                dictionary.update({key: matrix})
+                print(f'Calculations for matrix {key}')
+                # Now there is a matrix in the array for which we need to
+                # fill in the gaps
 
                 # Start the model
-                self.__learning_and_fill(dictionary, keys, extra_matrix = extra_matrix, method = method, predictor_configuration = predictor_configuration,
-                                         hyperparameters = hyperparameters, params = params, add_outputs = add_outputs)
-            print('Runtime -', timeit.default_timer() - start, 'sec. \n')
+                self.__learning_and_fill(train_tensor = train_tensor,
+                                         final_matrix = matrix,
+                                         key = key,
+                                         extra_matrix = extra_matrix,
+                                         method = method,
+                                         predictor_configuration = predictor_configuration,
+                                         hyperparameters = hyperparameters,
+                                         params = params,
+                                         add_outputs = add_outputs)
+            print(f'Runtime - {timeit.default_timer() - start} sec. \n')
 
         # Saving the generated dictionary with metadata to a JSON file
-        Outputs_path = os.path.join(self.directory, 'Outputs')
-        json_path = os.path.join(Outputs_path, 'Metadata.json')
+        json_path = os.path.join(self.outputs_path, 'Metadata.json')
         with open(json_path, 'w') as json_file:
             json.dump(self.metadata, json_file)
 
     def nn_interpolation(self, key_values = {'gap': -100.0, 'skip': -200.0, 'NoData': -32768.0}):
         """
-        A method which can fill in gaps using the nearest neighbor interpolation method
+        A method which can fill in gaps using the nearest neighbor interpolation
+        method
 
         :param key_values: dictionary with omissions, irrelevant and missing values
-        :return: in the project folder "Outputs", matrices with filled-in gaps are created in the .npy format.
+        :return: in the project folder "Outputs", matrices with filled-in gaps
+        are created in the .npy format.
         """
 
         # Defining flags for gaps, skips and NoData
@@ -682,29 +777,32 @@ class SimpleSpatialGapfiller():
         self.skip = key_values.get('skip')
         self.nodata = key_values.get('NoData')
 
-        files = os.listdir(self.Inputs_path)
+        files = os.listdir(self.inputs_path)
         files.sort()
 
         for file in files:
             start = timeit.default_timer()
-            matrix = np.load(os.path.join(self.Inputs_path, file))
+            matrix = np.load(os.path.join(self.inputs_path, file))
 
             shape = matrix.shape
             all_pixels = shape[0] * shape[1]
-            # If all the values in the matrix are gaps, etc., then the layer is not filled in
+            # If all the values in the matrix are gaps, etc., then the layer
+            # is not filled in
             if all_pixels - ((matrix == self.gap).sum() + (matrix == self.skip).sum() + (matrix == self.nodata).sum()) <= 10:
-                print('No calculation for matrix', file[:-4])
-            # If there are no gaps in the image, it is saved as filled in without using the algorithm
+                print(f'No calculation for matrix {file[:-4]}')
+            # If there are no gaps in the image, it is saved as filled in
+            # without using the algorithm
             elif (matrix == self.gap).sum() == 0:
-                print('No gaps in matrix', file[:-4])
-                where_to_save = os.path.join(self.Outputs_path, file)
+                print(f'No gaps in matrix {file[:-4]}')
+                where_to_save = os.path.join(self.outputs_path, file)
                 np.save(where_to_save, matrix)
             else:
-                print('Calculations for matrix', file[:-4])
+                print(f'Calculations for matrix {file[:-4]}')
                 # Copy of the matrix for applying all masks
                 copy_matrix = np.copy(matrix)
 
-                # Interpolation is performed for all flags - they must be marked as gaps
+                # Interpolation is performed for all flags - they must be
+                # marked as gaps
                 matrix[matrix == self.skip] = self.gap
                 matrix[matrix == self.nodata] = self.gap
 
@@ -719,13 +817,14 @@ class SimpleSpatialGapfiller():
                 x1 = xx[~Gap_matrix.mask]
                 y1 = yy[~Gap_matrix.mask]
                 newarr = Gap_matrix[~Gap_matrix.mask]
-                GD1 = interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method='nearest')
+                GD1 = interpolate.griddata((x1, y1), newarr.ravel(),
+                                           (xx, yy), method='nearest')
 
                 # The return of previously removed flags
                 GD1[copy_matrix == self.skip] = self.skip
                 GD1[copy_matrix == self.nodata] = self.nodata
 
                 # Saving the matrix to the outputs folder
-                where_to_save = os.path.join(self.Outputs_path, file)
+                where_to_save = os.path.join(self.outputs_path, file)
                 np.save(where_to_save, GD1)
-                print('Runtime -', timeit.default_timer() - start, 'sec. \n')
+                print(f'Runtime - {timeit.default_timer() - start} sec. \n')
