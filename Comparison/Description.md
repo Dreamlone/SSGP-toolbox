@@ -1,4 +1,3 @@
-
 # Comparison of gap-filling algorithms
 
 The "Comparison" folder contains land surface temperature (LST) data for three test territories: Saint Petersburg (Russia), Madrid (Spain) and Vladivostok (Russia). LST data received from the MODIS sensor - product MOD11A1, daily composites from Terra satellite. The temperature in the matrices in degrees Kelvin.
@@ -27,34 +26,41 @@ Biomes matrix and elevation were derived from additional layers of the Sentinel-
 SSGP-toolbox configuration for filling this layers: 
 > method = 'SVR', predictor_configuration = 'Biome', hyperparameters = 'RandomGridSearch', add_outputs = False
 
+"CRAN gapfill" configuration for filling this layers: 
+> Gapfill(data, dopar = TRUE)
+
+"Gapfilling rasters" configuration for filling this layers: 
+> gapfill(x, elevation_matrix, data_points = 40000)
+
 ## Comparison result
 
-#### Table for Saint Petersburg. Mean Absolute Error, Celsius degree
+### Table for Saint Petersburg. Mean Absolute Error, Celsius degree
 | Algorithm / Gap size | 4%  | 6%  |  15%  |  28%  |  40%  |  52%  |   70%  |  96%  |
 | :-----: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | SSGP-toolbox | 0,42 | 0,42 | 0,35 | 0,39 | 0,43 | 0,48 | 0,47 | 0,87 |
 | CRAN gapfill | 0,8 | 1,28 | 0,94 | 0,99 | 1,31 | 0,98 | 1,08  | 1,07 |
 | Gapfilling rasters | 0,61 | 0,73 | 0,96 | 0,88 | 0,86 | 0,54 | 0,82 | 0,8 |
 
-#### Figure for Saint Petersburg
+### Figure for Saint Petersburg
 ![Spb.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/spb_case.png)
 
-#### Table for Madrid case. Mean Absolute Error, Celsius degree
+### Table for Madrid case. Mean Absolute Error, Celsius degree
 | Algorithm / Gap size | 5%  | 8%  |  17%  |  29%  |  39%  |  50%  |   78%  |  94%  |
 | :-----: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | SSGP-toolbox | 0,53 | 0,89 | 0,76 | 0,79 | 0,69 | 0,84 | 1,04 | 0,97 |
 | CRAN gapfill | 1,03 | 1,19 | 1,39 | 1,17 | 1,11 | 1,19 | 1,32 | 1,42 |
 | Gapfilling rasters | 1,37 | 1,7 | 1,56 | 1,57 | 1,76 | 2,15 | 2,66 | 2,94 |
 
-#### Figure for Madrid case
+### Figure for Madrid case
 ![Madrid.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/madrid_case.png)
 
-#### Table for Vladivostok case. Mean Absolute Error, Celsius degree
+### Table for Vladivostok case. Mean Absolute Error, Celsius degree
 | Algorithm / Gap size | 5% | 10% | 15% | 28% | 44% | 50% | 74% | 93% |
 | :-----: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | SSGP-toolbox | 0,3  |	0,31 |	0,36 |	0,32 |	0,47 |	0,36 |	0,5  | 0,68 |
 | CRAN gapfill | 0,47 |	0,36 |	0,58 |	0,43 |	0,59 |	0,55 |	0,84 |	0,73 |
 | Gapfilling rasters | 0,67	| 0,63 | 0,66 |0,72 | 0,77 | 0,81 |	0,85 |	1,24 |
 
-#### Figure for Vladivostok case
+### Figure for Vladivostok case
 ![Vladivostok.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/vladivostok_case.png)
+
