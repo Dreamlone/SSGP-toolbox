@@ -22,6 +22,7 @@ Temperature, Surface Albedo and NDVI](https://www.mdpi.com/2072-4292/12/23/3865)
     'pyproj' 
 
 ###### If errors occur when installing "gdal", you should install the gdal library before running the command to install this module
+    conda install -c conda-forge gdal
 
 ## Install module
 
