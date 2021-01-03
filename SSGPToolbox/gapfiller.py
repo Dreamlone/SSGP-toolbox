@@ -37,6 +37,8 @@ from sklearn.svm import SVR
 from sklearn.model_selection import KFold, cross_val_score
 from sklearn import preprocessing
 from scipy import interpolate
+import multiprocessing as mp
+from multiprocessing.dummy import Pool
 
 
 class SimpleSpatialGapfiller():
@@ -45,10 +47,11 @@ class SimpleSpatialGapfiller():
 
     :param directory: the location of the project folders: "History", "Inputs"
     and "Extra"
+    :param parallel: is there a need to run the algorithm in parallel
     """
 
     # When initializing the class, we must specify
-    def __init__(self, directory):
+    def __init__(self, directory, parallel=False):
         # Threshold value for not including layers in the training selection
         # when exceeded (changes from 0.0 to 1.0)
         self.main_threshold = 0.05
@@ -67,6 +70,9 @@ class SimpleSpatialGapfiller():
         # Creating a dictionary with data that will be filled in as the
         # algorithm works
         self.metadata = {}
+
+        # Do we need to launch algorithm in parallel
+        self.parallel = parallel
 
     def __make_training_sample(self):
         """
@@ -515,12 +521,13 @@ class SimpleSpatialGapfiller():
         print(f'Number of gap pixels - {len(gaps)}')
 
         # Make a copy of the matrix - we will write the values to it after applying the algorithm
-        filled_matrix = np.copy(final_matrix)
+        self.filled_matrix = np.copy(final_matrix)
 
         # THE MODEL IS TRAINED PIXEL BY PIXEL
         # scores - an array that will contain error values during cross-validation
-        scores = []
-        for gap_pixel in gaps:
+        self.scores = []
+
+        def pixel_model(gap_pixel):
             coord_row = gap_pixel[0]
             coord_column = gap_pixel[1]
 
@@ -646,24 +653,29 @@ class SimpleSpatialGapfiller():
                                                         X_test,
                                                         params = params)
 
-                # The value of the error in the test during cross-validation is
-                # recorded in a separate array
-                scores.append(abs(score))
-
             # Write the value predicted by the algorithm to the matrix
-            filled_matrix[coord_row, coord_column] = predicted
+            self.filled_matrix[coord_row, coord_column] = predicted
+            self.scores.append(abs(score))
+
+        if self.parallel == True:
+            # Run algorithm in parallel way
+            self.pool.map(pixel_model, gaps)
+        else:
+            # Single process run
+            for gap_index in gaps:
+                pixel_model(gap_index)
 
         npy_name = ''.join((key,'.npy'))
         filled_matrix_npy = os.path.join(self.outputs_path, npy_name)
-        np.save(filled_matrix_npy, filled_matrix)
+        np.save(filled_matrix_npy, self.filled_matrix)
         # If the "add_outputs" parameter is set to True, the layer filled in
         # by the model is included in the training selection
         if add_outputs == True:
             filled_matrix_history_npy = os.path.join(self.history_path, npy_name)
-            np.save(filled_matrix_history_npy, filled_matrix)
+            np.save(filled_matrix_history_npy, self.filled_matrix)
 
         # Now let's look at the errors received from cross-validation
-        scores = np.array(scores)
+        scores = np.array(self.scores)
         mean_score = np.mean(scores)
         print(f'Mean absolute error for cross-validation - {mean_score}')
         # Fill in the metadata with the necessary information: how well this
@@ -690,6 +702,7 @@ class SimpleSpatialGapfiller():
         :param add_outputs: will the layers filled in by the algorithm be added
         to the training sample
         :param key_values: dictionary with omissions, irrelevant and missing values
+
         :return: in the project folder "Outputs", matrices with filled-in gaps
         are created in the .npy format. And a JSON file with quality metrics for each matrix also.
         """
@@ -711,6 +724,9 @@ class SimpleSpatialGapfiller():
         inputs_files.sort()
         for input in inputs_files:
             start = timeit.default_timer()
+
+            if self.parallel == True:
+                self.pool = Pool(mp.cpu_count())
 
             # Merging matrices from the "History" folder into an array
             train_tensor = self.__make_training_sample()
@@ -755,6 +771,11 @@ class SimpleSpatialGapfiller():
                                          hyperparameters = hyperparameters,
                                          params = params,
                                          add_outputs = add_outputs)
+
+            if self.parallel == True:
+                self.pool.close()
+                self.pool.join()
+
             print(f'Runtime - {timeit.default_timer() - start} sec. \n')
 
         # Saving the generated dictionary with metadata to a JSON file
@@ -768,6 +789,7 @@ class SimpleSpatialGapfiller():
         method
 
         :param key_values: dictionary with omissions, irrelevant and missing values
+
         :return: in the project folder "Outputs", matrices with filled-in gaps
         are created in the .npy format.
         """

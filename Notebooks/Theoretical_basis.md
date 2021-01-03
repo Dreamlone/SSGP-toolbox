@@ -1,7 +1,7 @@
 # Theoretical basis
 
 ## Spatial Gapfilling
-[class - Gapfiller](https://github.com/Dreamlone/SSGP-toolbox/blob/master/SSGPToolbox/Gapfiller.py)
+[class - Gapfiller](https://github.com/Dreamlone/SSGP-toolbox/blob/master/SSGPToolbox/gapfiller.py)
 
 The algorithm relies on values in known pixels of the same matrix as the gap in order to estimate the value in the gap.
 
@@ -17,10 +17,10 @@ Each pixel uses its own machine learning algorithm and generates its own trainin
 
 ### Time complexity
 
-Based on the results of experiments with the model, it was found that the time complexity of the algorithm is linear.
+Based on the results of experiments with the model, it was found that the time complexity of the algorithm is sublinear.
 
 ![Complexity.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_4_Complexity.png)
->>>The average image size was 8.500 pixels and train sample contains of 250-350 layers
+Time complexity for the gap-filling algorithm (the average image size was 8500 pixels and train sample contains 250–350 layers). Indent shows the standard error. This graph shows the complexity of the algorithm when running in a single process (parallel = False)
 
 ### Verification
 
@@ -31,7 +31,7 @@ The algorithm was verified using thermal remote sensing data from the Sentinel-3
 You can see from the graph that the accuracy of data recovery depends more on the distribution of the temperature field in the image than on the size of the gap.
 
 ## Time Series Gapfilling
-[class - Discretizator](https://github.com/Dreamlone/SSGP-toolbox/blob/master/SSGPToolbox/TimeSeries.py)
+[class - Discretizator](https://github.com/Dreamlone/SSGP-toolbox/blob/master/SSGPToolbox/timeseries.py)
 
 To fill in the gaps in the time series, we use a local approximation by a polynomial of the 2nd degree over the known 5 neighboring points. An illustration of how the algorithm works can be seen below.
 ![TimeSeries1.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_7_TS.png)
@@ -41,7 +41,7 @@ This approach of filling in gaps is most effective in the case of smooth time se
 ![TimeSeries1.png](https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/Supplementary/images/rm_8_TS.png)
 
 ## Identification of distorted values
-[function - cellular_expand](https://github.com/Dreamlone/SSGP-toolbox/blob/master/SSGPToolbox/Preparators/common_functions.py)
+[function - cellular_expand](https://github.com/Dreamlone/SSGP-toolbox/blob/master/SSGPToolbox/preparators/common_functions.py)
 
 ###### The algorithm was developed to identify anomalies in temperature fields (therefore, using it in fields with other parameters may lead to incorrect results)
 
