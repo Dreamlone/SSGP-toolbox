@@ -27,6 +27,7 @@ import pandas as pd
 import scipy.spatial
 
 # scikit-learn version is 0.21.3.
+from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import GridSearchCV
@@ -99,11 +100,11 @@ class SimpleSpatialGapfiller():
             shape = matrix.shape
             threshold = amount_na/(shape[0]*shape[1])
             if threshold > self.main_threshold:
-                pass
-            else:
-                train_tensor.append(matrix)
+                prefix = 'Warning: Matrix in the training sample contains more than'
+                print(f'{prefix} {self.main_threshold * 100} % missing values (gap + skip + NoData). Continue')
+            train_tensor.append(matrix)
 
-        return(train_tensor)
+        return train_tensor
 
     def __learning_and_fill(self, train_tensor, final_matrix, key,
                             extra_matrix, method, predictor_configuration,
@@ -129,7 +130,22 @@ class SimpleSpatialGapfiller():
         """
 
         # Lasso
-        def lasso_regression(X_train, y_train, X_test, params):
+        def lasso_regression(X_train, y_train, X_test, params, use_cv: bool = True):
+            # If there are not enough points for cross validation
+            if use_cv is False:
+                if params is None:
+                    model = Lasso()
+                else:
+                    model = Lasso(**params)
+                model.fit(X_train, y_train)
+                predicted = model.predict(X_test)
+
+                # Calculate score on train
+                train_predicted = model.predict(X_train)
+                validation_score = mean_absolute_error(np.ravel(y_train),
+                                                       np.ravel(train_predicted))
+                return predicted, validation_score
+
             # Grid search for Lasso due to the small number of hyperparameters 'GridSearch' and 'RandomGridSearch' are the same
             if hyperparameters == 'RandomGridSearch' or hyperparameters == 'GridSearch':
                 # We search the grid with cross-validation (the number of folds is 3)
@@ -138,7 +154,8 @@ class SimpleSpatialGapfiller():
                 # Setting the model to train
                 estimator = Lasso()
                 # We train the model with the specified parameter options (we search the grid)
-                optimizer = GridSearchCV(estimator, param_grid, iid = 'deprecated', cv = 3, scoring = 'neg_mean_absolute_error')
+                optimizer = GridSearchCV(estimator, param_grid, iid='deprecated',
+                                         cv=3, scoring='neg_mean_absolute_error')
                 optimizer.fit(X_train, y_train)
                 regression = optimizer.best_estimator_
                 predicted = regression.predict(X_test)
@@ -149,16 +166,31 @@ class SimpleSpatialGapfiller():
                 estimator.set_params(**params)
 
                 # Cross-validation check
-                fold = KFold(n_splits = 3, shuffle = True)
-                validation_score = cross_val_score(estimator = estimator, X = X_train, y = y_train, cv = fold, scoring = 'neg_mean_absolute_error')
+                fold = KFold(n_splits=3, shuffle=True)
+                validation_score = cross_val_score(estimator=estimator, X=X_train, y=y_train, cv=fold, scoring='neg_mean_absolute_error')
 
                 # Training the model already on all data
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
-            return(predicted, validation_score)
+            return predicted, validation_score
 
         # Random forest
-        def random_forest_regression(X_train, y_train, X_test, params):
+        def random_forest_regression(X_train, y_train, X_test, params, use_cv: bool = True):
+            # If there are not enough points for cross validation
+            if use_cv is False:
+                if params is None:
+                    model = RandomForestRegressor()
+                else:
+                    model = RandomForestRegressor(**params)
+                model.fit(X_train, y_train)
+                predicted = model.predict(X_test)
+
+                # Calculate score on train
+                train_predicted = model.predict(X_train)
+                validation_score = mean_absolute_error(np.ravel(y_train),
+                                                       np.ravel(train_predicted))
+                return predicted, validation_score
+
             # Random grid search
             if hyperparameters == 'RandomGridSearch':
                 # Carry out a random grid search with cross-validation (the number of folds is 3)
@@ -167,9 +199,9 @@ class SimpleSpatialGapfiller():
                 max_leaf_nodes = [10, 50, 100]
                 param_grid = {'max_depth': max_depth, 'min_samples_split': min_samples_split, 'max_leaf_nodes': max_leaf_nodes}
                 # Set the model to be trained
-                estimator = RandomForestRegressor(n_estimators = 50, n_jobs = -1)
+                estimator = RandomForestRegressor(n_estimators=50, n_jobs=-1)
                 # Train the model with the given options of parameters
-                optimizer = RandomizedSearchCV(estimator, param_grid, n_iter = 5, cv = 3, iid = 'deprecated', scoring = 'neg_mean_absolute_error')
+                optimizer = RandomizedSearchCV(estimator, param_grid, n_iter=5, cv=3, iid='deprecated', scoring='neg_mean_absolute_error')
                 optimizer.fit(X_train, np.ravel(y_train))
                 regression = optimizer.best_estimator_
                 predicted = regression.predict(X_test)
@@ -197,10 +229,25 @@ class SimpleSpatialGapfiller():
                 validation_score = cross_val_score(estimator = estimator, X = X_train, y = y_train, cv = fold, scoring = 'neg_mean_absolute_error')
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
-            return(predicted, validation_score)
+            return predicted, validation_score
 
         # Extra trees
-        def extra_trees_regression(X_train, y_train, X_test, params):
+        def extra_trees_regression(X_train, y_train, X_test, params, use_cv: bool = True):
+            # If there are not enough points for cross validation
+            if use_cv is False:
+                if params is None:
+                    model = ExtraTreesRegressor()
+                else:
+                    model = ExtraTreesRegressor(**params)
+                model.fit(X_train, y_train)
+                predicted = model.predict(X_test)
+
+                # Calculate score on train
+                train_predicted = model.predict(X_train)
+                validation_score = mean_absolute_error(np.ravel(y_train),
+                                                       np.ravel(train_predicted))
+                return predicted, validation_score
+
             # Random grid search
             if hyperparameters == 'RandomGridSearch':
                 # Carry out a random grid search with cross-validation (the number of folds is 3)
@@ -242,10 +289,26 @@ class SimpleSpatialGapfiller():
                                                    cv = fold, scoring = 'neg_mean_absolute_error')
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
-            return(predicted, validation_score)
+            return predicted, validation_score
 
         # К-nearest neighbors
-        def knn_regression(X_train, y_train, X_test, params):
+        def knn_regression(X_train, y_train, X_test, params, use_cv: bool = True):
+
+            # If there are not enough points for cross validation
+            if use_cv is False:
+                if params is None:
+                    model = KNeighborsRegressor()
+                else:
+                    model = KNeighborsRegressor(**params)
+                model.fit(X_train, y_train)
+                predicted = model.predict(X_test)
+
+                # Calculate score on train
+                train_predicted = model.predict(X_train)
+                validation_score = mean_absolute_error(np.ravel(y_train),
+                                                       np.ravel(train_predicted))
+                return predicted, validation_score
+
             # Random grid search
             if hyperparameters == 'RandomGridSearch':
                 # Carry out a random grid search with cross-validation (the number of folds is 3)
@@ -296,10 +359,10 @@ class SimpleSpatialGapfiller():
                                                    cv = fold, scoring = 'neg_mean_absolute_error')
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
-            return(predicted, validation_score)
+            return predicted, validation_score
 
         # Support Vector Machine
-        def svm_regression(X_train, y_train, X_test, params):
+        def svm_regression(X_train, y_train, X_test, params, use_cv: bool = True):
             # Combine our sample for the standardization procedure
             sample = np.vstack((X_train, X_test))
 
@@ -307,6 +370,21 @@ class SimpleSpatialGapfiller():
             sample = preprocessing.scale(sample)
             X_train = sample[:-1, :]
             X_test = sample[-1:, :]
+
+            # If there are not enough points for cross validation
+            if use_cv is False:
+                if params is None:
+                    model = SVR()
+                else:
+                    model = SVR(**params)
+                model.fit(X_train, y_train)
+                predicted = model.predict(X_test)
+
+                # Calculate score on train
+                train_predicted = model.predict(X_train)
+                validation_score = mean_absolute_error(np.ravel(y_train),
+                                                       np.ravel(train_predicted))
+                return predicted, validation_score
 
             # Random grid search
             if hyperparameters == 'RandomGridSearch':
@@ -345,14 +423,14 @@ class SimpleSpatialGapfiller():
                 estimator.set_params(**params)
 
                 # Cross-validation
-                fold = KFold(n_splits = 3, shuffle = True)
-                validation_score = cross_val_score(estimator = estimator,
-                                                   X = X_train, y = np.ravel(y_train),
-                                                   cv = fold, scoring = 'neg_mean_absolute_error')
+                fold = KFold(n_splits=3, shuffle=True)
+                validation_score = cross_val_score(estimator=estimator,
+                                                   X=X_train, y=np.ravel(y_train),
+                                                   cv=fold, scoring='neg_mean_absolute_error')
                 estimator.fit(X_train, np.ravel(y_train))
                 predicted = estimator.predict(X_test)
 
-            return(predicted, validation_score)
+            return predicted, validation_score
 
         def all_points(coord_row, coord_column, final_matrix, tensor):
             # The indices of all points that are not covered by clouds (including pixels with a value skip, nodata)
@@ -371,7 +449,7 @@ class SimpleSpatialGapfiller():
                 # Entering the data of this pixel for the target matrix
                 dataframe[-1, col_index] = final_matrix[i, j]
             dataframe = pd.DataFrame(dataframe)
-            return (dataframe)
+            return dataframe
 
         def random_points(coord_row, coord_column, final_matrix, tensor):
             # Make a random selection of points
@@ -414,7 +492,7 @@ class SimpleSpatialGapfiller():
                 # Entering the data of this pixel for the target matrix
                 dataframe[-1, col_index] = final_matrix[i, j]
             dataframe = pd.DataFrame(dataframe)
-            return (dataframe)
+            return dataframe
 
         def biome_points(coord_row, coord_column, final_matrix, tensor, extra_matrix):
             # Index of the row and column for the pixel to be filled in
@@ -514,7 +592,7 @@ class SimpleSpatialGapfiller():
                 # Entering the data of this pixel for the target matrix
                 dataframe[-1, col_index] = final_matrix[i,j]
             dataframe = pd.DataFrame(dataframe)
-            return(dataframe)
+            return dataframe
 
         # Mark the indexes of points that need to be filled in
         gaps = np.argwhere(final_matrix == self.gap)
@@ -534,17 +612,17 @@ class SimpleSpatialGapfiller():
             # Creating a dataset for model training
             if predictor_configuration == 'Biome':
                 dataframe = biome_points(coord_row, coord_column,
-                                         final_matrix = final_matrix,
-                                         tensor = train_tensor,
-                                         extra_matrix = extra_matrix)
+                                         final_matrix=final_matrix,
+                                         tensor=train_tensor,
+                                         extra_matrix=extra_matrix)
             elif predictor_configuration == 'All':
                 dataframe = all_points(coord_row, coord_column,
-                                       final_matrix = final_matrix,
-                                       tensor = train_tensor)
+                                       final_matrix=final_matrix,
+                                       tensor=train_tensor)
             elif predictor_configuration == 'Random':
                 dataframe = random_points(coord_row, coord_column,
-                                          final_matrix = final_matrix,
-                                          tensor = train_tensor)
+                                          final_matrix=final_matrix,
+                                          tensor=train_tensor)
 
             # Preparing data
             # If there is at least one skip value in the rightmost column,
@@ -556,22 +634,22 @@ class SimpleSpatialGapfiller():
                 # We must delete those columns that have at least one skip value
                 # (those values that do not need to be filled in)
                 dataframe.replace(self.skip, np.nan, inplace=True)
-                dataframe.dropna(axis = 'columns', inplace = True)
+                dataframe.dropna(axis='columns', inplace=True)
 
                 # Setting new column names
                 new_columns = range(0, len(dataframe.columns))
                 col_names = []
                 for i in new_columns:
                     col_names.append(str(i))
-                dataframe.set_axis(col_names, axis = 1, inplace = True)
+                dataframe.set_axis(col_names, axis=1, inplace=True)
 
                 # Assign the remaining flags the value Nan
-                dataframe.replace(self.nodata, np.nan, inplace = True)
-                dataframe.replace(self.gap, np.nan, inplace = True)
+                dataframe.replace(self.nodata, np.nan, inplace=True)
+                dataframe.replace(self.gap, np.nan, inplace=True)
 
                 # We delete those lines where we have omissions for all signs
                 # (the cloud has closed the entire territory)
-                dataframe = dataframe.dropna(how = 'all')
+                dataframe = dataframe.dropna(how='all')
 
                 # Take the last row from the dataset (except for the last
                 # element in it)
@@ -589,13 +667,13 @@ class SimpleSpatialGapfiller():
                 # delete the columns with gaps
                 if len(indexes_na_str) > 0:
                     for i in indexes_na_str:
-                        dataframe.drop([i], axis = 1, inplace = True)
+                        dataframe.drop([i], axis=1, inplace=True)
                     # You must re-set the indexes for the columns
                     new_names = range(0, len(dataframe.columns))
                     new = []
                     for i in new_names:
                         new.append(str(i))
-                    dataframe.set_axis(new, axis = 1, inplace = True)
+                    dataframe.set_axis(new, axis=1, inplace=True)
                 else:
                     pass
 
@@ -604,13 +682,13 @@ class SimpleSpatialGapfiller():
                     # Looking for the median value by column
                     sample = np.array(dataframe[index].dropna())
                     median = np.median(sample)
-                    return(median)
+                    return median
 
                 # The last column contains the target, so we don't touch the
                 # gaps in it yet
                 for i in range(0,len(dataframe.columns)-1):
                     i = str(i)
-                    dataframe[i].fillna(col_median(i), inplace = True)
+                    dataframe[i].fillna(col_median(i), inplace=True)
 
                 # Divide the dataframe into a training sample and an object to
                 # predict the value for
@@ -627,31 +705,65 @@ class SimpleSpatialGapfiller():
                 X_test = np.array(test.iloc[:, :-1])
 
                 # Depending on the selected option, the corresponding method is enabled
-                if method == 'RandomForest':
-                    predicted, score = random_forest_regression(X_train,
-                                                                np.ravel(y_train),
-                                                                X_test,
-                                                                params = params)
-                elif method == 'ExtraTrees':
-                    predicted, score = extra_trees_regression(X_train,
-                                                              np.ravel(y_train),
-                                                              X_test,
-                                                              params = params)
-                elif method == 'Knn':
-                    predicted, score = knn_regression(X_train,
-                                                      y_train,
-                                                      X_test,
-                                                      params = params)
-                elif method == 'SVR':
-                    predicted, score = svm_regression(X_train,
-                                                      y_train,
-                                                      X_test,
-                                                      params = params)
-                elif method == 'Lasso':
-                    predicted, score = lasso_regression(X_train,
-                                                        y_train,
-                                                        X_test,
-                                                        params = params)
+                try:
+                    if method == 'RandomForest':
+                        predicted, score = random_forest_regression(X_train,
+                                                                    np.ravel(y_train),
+                                                                    X_test,
+                                                                    params=params)
+                    elif method == 'ExtraTrees':
+                        predicted, score = extra_trees_regression(X_train,
+                                                                  np.ravel(y_train),
+                                                                  X_test,
+                                                                  params=params)
+                    elif method == 'Knn':
+                        predicted, score = knn_regression(X_train,
+                                                          y_train,
+                                                          X_test,
+                                                          params=params)
+                    elif method == 'SVR':
+                        predicted, score = svm_regression(X_train,
+                                                          y_train,
+                                                          X_test,
+                                                          params=params)
+                    elif method == 'Lasso':
+                        predicted, score = lasso_regression(X_train,
+                                                            y_train,
+                                                            X_test,
+                                                            params=params)
+                except ValueError as ex:
+                    if 'n_splits' in ex.__str__():
+                        print('The size of the training sample is insufficient, CV canceled')
+                    if method == 'RandomForest':
+                        predicted, score = random_forest_regression(X_train,
+                                                                    np.ravel(y_train),
+                                                                    X_test,
+                                                                    params=params,
+                                                                    use_cv=False)
+                    elif method == 'ExtraTrees':
+                        predicted, score = extra_trees_regression(X_train,
+                                                                  np.ravel(y_train),
+                                                                  X_test,
+                                                                  params=params,
+                                                                  use_cv=False)
+                    elif method == 'Knn':
+                        predicted, score = knn_regression(X_train,
+                                                          y_train,
+                                                          X_test,
+                                                          params=params,
+                                                          use_cv=False)
+                    elif method == 'SVR':
+                        predicted, score = svm_regression(X_train,
+                                                          y_train,
+                                                          X_test,
+                                                          params=params,
+                                                          use_cv=False)
+                    elif method == 'Lasso':
+                        predicted, score = lasso_regression(X_train,
+                                                            y_train,
+                                                            X_test,
+                                                            params=params,
+                                                            use_cv=False)
 
             # Write the value predicted by the algorithm to the matrix
             self.filled_matrix[coord_row, coord_column] = predicted
