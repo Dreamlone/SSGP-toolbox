@@ -41,8 +41,11 @@ from scipy import interpolate
 import multiprocessing as mp
 from multiprocessing.dummy import Pool
 
+import warnings
+warnings.filterwarnings('ignore')
 
-class SimpleSpatialGapfiller():
+
+class SimpleSpatialGapfiller:
     """
     A class designed to fill in gaps in matrices.
 
@@ -464,11 +467,11 @@ class SimpleSpatialGapfiller():
                 random_i = random.randint(0, n_strings - 1)
                 random_j = random.randint(0, n_columns - 1)
                 coordinates = [random_i, random_j]
-                if final_matrix[random_i, random_j] == self.gap:
+                if np.isclose(final_matrix[random_i, random_j], self.gap):
                     pass
-                elif final_matrix[random_i, random_j] == self.skip:
+                elif np.isclose(final_matrix[random_i, random_j], self.skip):
                     pass
-                elif final_matrix[random_i, random_j] == self.nodata:
+                elif np.isclose(final_matrix[random_i, random_j], self.nodata):
                     pass
                 # If we already have such a pair in the list, we don't add it to the list
                 elif any(tuple(coordinates) == tuple(element) for element in coords):
@@ -545,11 +548,11 @@ class SimpleSpatialGapfiller():
                     random_i = random.randint(0, n_strings - 1)
                     random_j = random.randint(0, n_columns - 1)
                     coordinates = [random_i, random_j]
-                    if final_matrix[random_i, random_j] == self.gap:
+                    if np.isclose(final_matrix[random_i, random_j], self.gap):
                         pass
-                    elif final_matrix[random_i, random_j] == self.skip:
+                    elif np.isclose(final_matrix[random_i, random_j], self.skip):
                         pass
-                    elif final_matrix[random_i, random_j] == self.nodata:
+                    elif np.isclose(final_matrix[random_i, random_j], self.nodata):
                         pass
                     # If we already have such a pair in the list, we don't add it to the list
                     elif any(tuple(coordinates) == tuple(element) for element in coords):
