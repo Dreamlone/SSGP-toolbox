@@ -5,3 +5,4 @@ scanner:
 pycodestyle:
   max-line-length: 120  # Default is 79 in PEP 8
 
+no_blank_comment: False
