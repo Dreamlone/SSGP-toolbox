@@ -7,6 +7,7 @@ import numpy as np
 # Class for retrieving NDVI and Shortwave Albedo from MOD09GA
 # and preparing it for SSGP
 
+
 class MODIS_Reflectance_Products_MOD09GA():
 
     bits_map = np.array(['00', '01', '10', '11'])
