@@ -21,6 +21,8 @@ import os
 import random
 import timeit
 import json
+from pathlib import Path
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -49,21 +51,23 @@ class SimpleSpatialGapfiller:
     """
     A class designed to fill in gaps in matrices.
 
-    :param directory: the location of the project folders: "History", "Inputs"
-    and "Extra"
-    :param parallel: is there a need to run the algorithm in parallel
+    :param directory: the path to directory with the following folders:
+    "History", "Inputs" and "Extra"
+    :param parallel: is there a need to run the algorithm in a parallel mode.
+    If True - run fit each pixel models separately.
     """
 
-    # When initializing the class, we must specify
-    def __init__(self, directory, parallel=False):
+    def __init__(self, directory: Union[str, Path], parallel: bool = False):
         # Threshold value for not including layers in the training selection
         # when exceeded (changes from 0.0 to 1.0)
-        self.main_threshold = 0.05
+        self.main_threshold: float = 0.05
         self.directory = directory
+        if isinstance(self.directory, Path):
+            self.directory = str(self.directory)
 
         # Creating the 'Outputs' folder; if there is, use the existing one
         self.outputs_path = os.path.join(self.directory, 'Outputs')
-        if os.path.isdir(self.outputs_path) == False:
+        if os.path.isdir(self.outputs_path) is False:
             os.makedirs(self.outputs_path)
 
         # Access to all remaining folders in the project
