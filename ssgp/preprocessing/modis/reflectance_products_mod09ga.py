@@ -8,7 +8,7 @@ import numpy as np
 # and preparing it for SSGP
 
 
-class MODIS_Reflectance_Products_MOD09GA():
+class MODIS_Reflectance_Products_MOD09GA:
 
     bits_map = np.array(['00', '01', '10', '11'])
     supported_products = ['ndvi','albedo']

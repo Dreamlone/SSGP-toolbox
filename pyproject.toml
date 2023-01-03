@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "ssgp"
+version = "0.1.0"
+description = ""
+authors = ["Dreamlone <mik_sar@mail.ru>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.24.1"
+scikit-learn = "^1.2.0"
+pandas = "^1.5.2"
+pytest = "^7.2.0"
+matplotlib = "^3.6.2"
+pyproj = "^3.4.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

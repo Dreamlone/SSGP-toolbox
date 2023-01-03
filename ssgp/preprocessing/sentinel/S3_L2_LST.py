@@ -257,7 +257,7 @@ class S3_L2_LST():
     # Method for generating the file .npy in the appropriate directory
     # save_path --- the location to which you want to place a file with the result
     # biomes_instead_lst --- do you need to get a landscape type matrix instead of an LST matrix
-    def archive_to_npy(self, save_path, biomes_instead_lst = False):
+    def archive_to_npy(self, save_path, biomes_instead_lst: bool = False):
         self.biomes_instead_lst = biomes_instead_lst
 
         if os.path.isdir(save_path) == False:
@@ -284,6 +284,6 @@ class S3_L2_LST():
 
     # Method for saving metadata to a JSON file
     # output_path --- the location to which you want to place a file with the result
-    def save_metadata(self, output_path):
+    def save_metadata(self, output_path: str):
         with open(output_path, 'w') as f:
             f.write(json.dumps(self.metadata))
