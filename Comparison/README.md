@@ -1,13 +1,24 @@
 # Comparison of gap-filling algorithms
 
-The "Comparison" folder contains land surface temperature (LST) data for three test territories: Saint Petersburg (Russia), Madrid (Spain) and Vladivostok (Russia). LST data received from the MODIS sensor - product MOD11A1, daily composites from Terra satellite. The temperature in the matrices in degrees Kelvin.
+The "Comparison" folder contains land surface temperature (LST) data for three 
+test territories: Saint Petersburg (Russia), Madrid (Spain) and Vladivostok (Russia).
+LST data received from the MODIS sensor - product MOD11A1, daily composites from 
+Terra satellite. The temperature in the matrices in degrees Kelvin.
 
 Spatial coverage of such images is 1 degree of latitude per 1 degree of longitude for each area:
-* "StPetersburg": 30 – 31 °E, 58 – 59 °N;
-* "Madrid": 5 – 4 °W, 39 – 40 °N;
-* "Vladivostok": 132 – 133 °E, 44 – 45 °N;
 
-For St Petersburg case, 28 layers were prepared (data from June 2 to 8 for 2017, 2018, 2019, 2020); for Vladivostok case, 21 layers were prepared (data from September 12 to 18 for 2017, 2018, 2019), for the territory of Madrid - 28 (data from August 31 to September 6 for 2017, 2018, 2019, 2020). Validation was performed on the image for June 5, 2019 for St Petersburg; for September 15, 2019 for Vladivostok and for September 3, 2019 for Madrid. Each image generated 8 types of gaps ranging in size from 4 to 96%.
+* `StPetersburg`: 30 – 31 °E, 58 – 59 °N;
+* `Madrid`: 5 – 4 °W, 39 – 40 °N;
+* `Vladivostok`: 132 – 133 °E, 44 – 45 °N;
+
+For St Petersburg case, 28 layers were prepared (data from June 2 to 
+8 for 2017, 2018, 2019, 2020); for Vladivostok case, 21 layers were 
+prepared (data from September 12 to 18 for 2017, 2018, 2019), 
+for the territory of Madrid - 28 (data from August 31 to 
+September 6 for 2017, 2018, 2019, 2020). Validation was performed 
+on the image for June 5, 2019 for St Petersburg; for September 15, 
+2019 for Vladivostok and for September 3, 2019 for Madrid. Each image 
+generated 8 types of gaps ranging in size from 4 to 96%.
 
 ## Description of files and folders
 
