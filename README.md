@@ -71,7 +71,8 @@ can use the dataset we have prepared. You can find it in the "Comparison" folder
 The dataset already contains the layers filled in by our model, as well as the 
 ["CRAN gapfill"](https://cran.r-project.org/web/packages/gapfill/index.html) 
 and ["gapfilling rasters"](https://github.com/HughSt/gapfilling_rasters) layers.
-- [Detailed description of the data](./Comparison)
+
+Section with [detailed description of the data used for comparison](./Comparison)
 
 ## Citation
 
