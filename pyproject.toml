@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "SSGP-toolbox"
+version = "0.1.0"
+description = "Python library for filling gaps in matrices"
+authors = ["Dreamlone <mik.sarafanov@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+loguru = "^0.6.0"
+pytest = "^7.2.1"
+Jinja2 = "3.0.3"
+mkdocs = "^1.4.2"
+scikit-learn = "^1.2.2"
+pandas = "^2.0.1"
+netCDF4 = "^1.6.3"
+pyproj = "^3.5.0"
+GDAL = "^3.6.4"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

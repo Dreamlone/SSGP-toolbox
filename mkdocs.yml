@@ -1,0 +1,16 @@
+site_name: ssgp_toolbox
+site_url: https://ssgp_toolbox.readthedocs.io/en/latest/
+site_author: Dreamlone
+repo_url: https://github.com/Dreamlone/SSGP-toolbox
+
+nav:
+    - Home: index.md
+    - Common description:
+          - 'Test words': 'common/faq.md'
+    - Tutorials:
+          - 'Quick start': 'tutorial/1_quick_start.md'
+    - Additional:
+          - 'Contribution': 'additional/contributing.md'
+theme:
+    name: readthedocs
+    logo: https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/redesign/docs/media/images/label_blue.png

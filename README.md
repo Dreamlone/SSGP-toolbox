@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/master/docs/media/images/label.png" width="800"/>
+<img src="https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/redesign/docs/media/images/label.png" width="800"/>
 
 **Simple Spatial Gapfilling Processor - toolbox** - python library for filling 
 gaps in matrices (can be applied on any matrices) based on machine learning techniques and 
@@ -58,7 +58,8 @@ from the old version is also available in the new version (backwards compatibili
 Thus there are two SSGP-toolbox interfaces:
 
 - Old via `SimpleSpatialGapfiller` and other related classes;
-- New via `Extractor`, `Preprocessor`, `Gapfiller`, `Converter` 
+- New via `Extractor`, `Preprocessor`, `Gapfiller`, `Converter` and other more 
+  convenient wrappers
 
 It is recommended to use the new interface version. 
 More information about each version can be found in the official documentation.
