@@ -5,12 +5,33 @@ repo_url: https://github.com/Dreamlone/SSGP-toolbox
 
 nav:
     - Home: index.md
-    - Common description:
-          - 'Test words': 'common/faq.md'
+    - Comparison: comparison.md
     - Tutorials:
-          - 'Quick start': 'tutorial/1_quick_start.md'
-    - Additional:
-          - 'Contribution': 'additional/contributing.md'
+          - 'Quick start': 'guide/quick_start.md'
+          - 'Load products': 'guide/load.md'
+          - 'Preprocess': 'guide/preprocess.md'
+          - 'Search for corrupted pixels': 'guide/cellular.md'
+          - 'Apply spatial gapfilling': 'guide/spatial_gapfilling.md'
+          - 'Apply time series gapfilling': 'guide/spatial_gapfilling.md'
+          - 'Output preparation': 'guide/output.md'
+          - Tutorials (old interface):
+                - 'Quick start': 'guide_old/quick_start.md'
+                - 'Preprocess': 'guide_old/preprocess.md'
+                - 'Search for corrupted pixels': 'guide_old/cellular.md'
+                - 'Apply spatial gapfilling': 'guide_old/spatial_gapfilling.md'
+                - 'Apply time series gapfilling': 'guide_old/spatial_gapfilling.md'
+                - 'Output preparation': 'guide_old/output.md'
+    - Detailed explanation:
+          - 'Algorithms description': 'explanation/detailed.md'
+          - 'Loading': 'explanation/loading.md'
+          - 'Preprocessing': 'explanation/preprocessing.md'
+          - 'Corrupted pixels detection': 'explanation/cellular.md'
+          - 'Spatial gapfilling': 'explanation/spatial_gapfilling.md'
+          - 'Time series gapfilling': 'explanation/spatial_gapfilling.md'
+    - Development:
+          - 'Architecture description': 'development/architecture.md'
+          - 'Contribution': 'development/contributing.md'
+          - 'Maintainers info': 'development/maintainers.md'
 theme:
     name: readthedocs
     logo: https://raw.githubusercontent.com/Dreamlone/SSGP-toolbox/redesign/docs/media/images/label_blue.png
