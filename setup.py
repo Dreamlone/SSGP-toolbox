@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf8") as fh:
 requires = [
     'gdal>=2.4',
     'numpy',
-    'scikit-learn==0.21.3',
+    'scikit-learn==1.5.0',
     'pandas',
     'scipy',
     'netCDF4',
